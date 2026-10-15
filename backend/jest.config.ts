@@ -4,7 +4,7 @@ const base = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   rootDir: '.',
-  transform: { '^.+\.ts$': ['ts-jest', { tsconfig: 'tsconfig.json' }] },
+  transform: { '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.json' }] },
 };
 
 const config: Config = {
