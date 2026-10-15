@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { GuestOnly } from './features/auth/GuestOnly';
 import { RequireAuth } from './features/auth/RequireAuth';
-import { SESSION_KEY } from './features/auth/session';
+import { SESSION_KEY, useRevalidateOnRestore } from './features/auth/session';
 import { SignInPage } from './features/auth/SignInPage';
 import { SignUpPage } from './features/auth/SignUpPage';
 import { WelcomePage } from './features/home/WelcomePage';
@@ -19,6 +19,7 @@ export function createAppQueryClient(): QueryClient {
 }
 
 export function AppRoutes() {
+  useRevalidateOnRestore();
   return (
     <Routes>
       <Route element={<RequireAuth />}>

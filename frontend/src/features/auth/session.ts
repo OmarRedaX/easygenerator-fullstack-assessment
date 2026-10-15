@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { getMeOrNull } from '../../lib/api/auth';
 import type { User } from '../../lib/api/types';
 
@@ -43,4 +43,21 @@ export function useClearSession() {
 export function useRecheckSession() {
   const client = useQueryClient();
   return useCallback(() => client.invalidateQueries({ queryKey: SESSION_KEY }), [client]);
+}
+
+/**
+ * A page restored from the browser's back/forward cache can show protected content from before a sign-out. When
+ * that happens, forget what we know (the guards show the splash) and ask the server who is signed in.
+ */
+export function useRevalidateOnRestore(): void {
+  const client = useQueryClient();
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) void client.resetQueries({ queryKey: SESSION_KEY });
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => {
+      window.removeEventListener('pageshow', onPageShow);
+    };
+  }, [client]);
 }

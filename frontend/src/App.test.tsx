@@ -163,6 +163,30 @@ describe('session continuity', () => {
     expect(here()).toBe('/signin');
   });
 
+  it('a page restored from the back/forward cache is re-verified, so protected content is not revealed after sign-out', async () => {
+    getMeOrNullMock.mockResolvedValue(member);
+    renderApp('/');
+    await screen.findByRole('heading', { level: 1, name: 'Welcome to the application.' });
+    expect(getMeOrNullMock).toHaveBeenCalledTimes(1);
+
+    // The visitor signed out elsewhere (or earlier); the browser now restores this old page from its cache.
+    getMeOrNullMock.mockResolvedValue(null);
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.queryByText('Welcome to the application.')).not.toBeInTheDocument();
+    expect(here()).toBe('/signin');
+  });
+
+  it('a normal page show does not re-ask the server', async () => {
+    getMeOrNullMock.mockResolvedValue(member);
+    renderApp('/');
+    await screen.findByRole('heading', { level: 1, name: 'Welcome to the application.' });
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: false }));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(getMeOrNullMock).toHaveBeenCalledTimes(1);
+  });
+
   it('a stale "not signed in" answer cannot discard a session that was just created (race)', async () => {
     const client = createAppQueryClient();
     client.setQueryData(SESSION_KEY, null);
