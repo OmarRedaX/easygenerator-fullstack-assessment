@@ -39,7 +39,8 @@ const cssByTheme: Record<ThemeName, string> = {
 };
 
 function cssVar(theme: ThemeName, name: string): string | undefined {
-  return new RegExp(`--color-${name}:\\s*([^;]+);`).exec(cssByTheme[theme])?.[1]?.trim();
+  const kebab = name.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+  return new RegExp(`--color-${kebab}:\\s*([^;]+);`).exec(cssByTheme[theme])?.[1]?.trim();
 }
 
 describe.each(['light', 'dark'] as const)('design tokens (%s)', (theme) => {

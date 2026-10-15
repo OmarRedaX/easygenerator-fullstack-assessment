@@ -1,1 +1,174 @@
 @import "tailwindcss";
+
+/*
+  Design tokens (specs/001-frontend-auth/contracts/ui-tokens.md). Light values live here; dark values redefine
+  the same variables below. Components use utilities (bg-surface, text-muted, ...), never raw colours.
+  No inline styles anywhere: the production CSP has no 'unsafe-inline'.
+*/
+@theme {
+  --color-page: #f5f5f7;
+  --color-surface: #ffffff;
+  --color-field: #ffffff;
+  --color-text: #1d1d1f;
+  --color-muted: #6e6e73;
+  --color-accent: #0071e3;
+  --color-accent-fill: #0071e3;
+  --color-accent-press: #0062c3;
+  --color-danger: #d70015;
+  --color-ok: #1d8a3a;
+  --color-line: rgb(0 0 0 / 0.14);
+  --color-ring: rgb(0 113 227 / 0.28);
+  --color-danger-bg: rgb(215 0 21 / 0.07);
+  --color-bar: rgb(255 255 255 / 0.72);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", system-ui,
+    sans-serif;
+
+  --radius-field: 12px;
+  --radius-card: 24px;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 40px rgb(0 0 0 / 0.08);
+
+  --tracking-display: -0.022em;
+  --tracking-hero: -0.03em;
+
+  --ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --animate-rise: rise 500ms var(--ease-soft) both;
+  --animate-rise-late: rise 600ms 80ms var(--ease-soft) both;
+  --animate-rise-later: rise 600ms 140ms var(--ease-soft) both;
+  --animate-fade: fade-in 200ms ease both;
+  --animate-spin-fast: spin 800ms linear infinite;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(-2px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes pulse-soft {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-page: #000000;
+    --color-surface: #1c1c1e;
+    --color-field: #2c2c2e;
+    --color-text: #f5f5f7;
+    --color-muted: #98989d;
+    --color-accent: #0a84ff;
+    /* White text on #0a84ff is only 3.65:1, so the button fill stays #0071e3 (4.70:1). */
+    --color-accent-fill: #0071e3;
+    --color-accent-press: #0062c3;
+    --color-danger: #ff6961;
+    --color-ok: #30d158;
+    --color-line: rgb(255 255 255 / 0.18);
+    --color-ring: rgb(10 132 255 / 0.4);
+    --color-danger-bg: rgb(255 105 97 / 0.12);
+    --color-bar: rgb(28 28 30 / 0.72);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 12px 40px rgb(0 0 0 / 0.5);
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+  body {
+    margin: 0;
+    background: var(--color-page);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition:
+      background-color 400ms var(--ease-soft),
+      color 400ms var(--ease-soft);
+  }
+  ::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+  button {
+    cursor: pointer;
+  }
+}
+
+/* Visitors who ask for more contrast get stronger borders and a solid focus indicator. */
+@media (prefers-contrast: more) {
+  :root {
+    --color-line: rgb(0 0 0 / 0.6);
+    --color-ring: var(--color-accent);
+  }
+}
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root {
+    --color-line: rgb(255 255 255 / 0.7);
+  }
+}
+
+/* Translucent layers become solid. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --color-bar: var(--color-surface);
+  }
+  .glass {
+    backdrop-filter: none !important;
+  }
+}
+
+/* Gentler, non-vestibular equivalents: no sliding or scaling, opacity only. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-rise,
+  .animate-rise-late,
+  .animate-rise-later,
+  .animate-fade {
+    animation-name: fade-in !important;
+    animation-duration: 200ms !important;
+  }
+  .active\:scale-press:active {
+    transform: none !important;
+  }
+  .animate-spin-fast {
+    animation: pulse-soft 1600ms ease-in-out infinite !important;
+  }
+}
+
+@utility scale-press {
+  transform: scale(0.97);
+}
