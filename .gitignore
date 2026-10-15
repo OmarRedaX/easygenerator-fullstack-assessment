@@ -11,3 +11,4 @@ coverage/
 graphify-out/
 .DS_Store
 *.tsbuildinfo
+.superpowers/
