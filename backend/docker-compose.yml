@@ -7,3 +7,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  api:
+    profiles: ["app"]
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    depends_on:
+      mongo: { condition: service_healthy }
+    ports: ["${API_PORT:-3000}:3000"]
+    environment:
+      NODE_ENV: development # production sets Secure cookies, which need HTTPS
+      MONGODB_URI: mongodb://mongo:27017/easygenerator
+      SESSION_SECRET: "${SESSION_SECRET:?generate one with: openssl rand -base64 32}"
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
