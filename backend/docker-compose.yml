@@ -20,4 +20,18 @@ services:
       NODE_ENV: development # production sets Secure cookies, which need HTTPS
       MONGODB_URI: mongodb://mongo:27017/easygenerator
       SESSION_SECRET: "${SESSION_SECRET:?generate one with: openssl rand -base64 32}"
+      # Must equal the origin the BROWSER uses: the CSRF guard compares it with the request's Origin even when the
+      # request arrives through the web proxy. With the `web` service below that is http://localhost:8080
+      # (set CORS_ORIGIN=http://localhost:8080); with `npm run dev:frontend` it is http://localhost:5173.
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+  web:
+    # Frontend: nginx serves the SPA and proxies /api to the api service (same origin, /api prefix preserved).
+    profiles: ["app"]
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      - api
+    ports: ["${WEB_PORT:-8080}:8080"]
+    environment:
+      BACKEND_URL: http://api:3000
