@@ -68,3 +68,33 @@ Running log of AI-assisted steps. Format: `## YYYY-MM-DD <topic>` with **Prompt 
 - **AI output:** The AI executed Task 1 itself rather than via a subagent, because the subagent workflow's ledger needs the git repo that Task 1 creates. The Docker daemon was not running at the start.
 - **Correction:** The user started Docker Desktop before the Mongo-dependent tasks.
 - **Decision:** Task 1 inline; Docker started by the user ahead of Mongo-dependent work.
+
+## 2026-10-15 Nest 12 vs Nest 11
+- **Prompt:** Install the NestJS packages as the plan specifies (`npm install @nestjs/*`, unpinned).
+- **AI output:** The unpinned install resolved the ESM-only Nest 12 (then-latest), which broke Jest (CJS ts-jest, `ERR_REQUIRE_ESM`).
+- **Correction:** The implementer pinned the Nest 11 line (`@nestjs/config` 4) and reinstalled cleanly.
+- **Decision:** The stack is locked to Nest 11 in `backend/CLAUDE.md`.
+
+## 2026-10-15 Root test scripts and test setup tweaks
+- **Prompt:** Add the root `test:unit`, `test:int` and `test:cov` scripts from the plan.
+- **AI output:** The plan's root scripts did not forward extra arguments; `npm run test:unit -- --passWithNoTests` failed.
+- **Correction:** Added a trailing ` --` to the three root scripts. Also set dotenv `quiet: true` in `test/setup-env.ts` (dotenv 18 prints a banner) and added `*.tsbuildinfo` to `.gitignore`.
+- **Decision:** Kept all three small changes.
+
+## 2026-10-15 Build emitted no dist on second run
+- **Prompt:** Review Task 3 (backend scaffold).
+- **AI output:** The plan's tsconfig `incremental: true` combined with nest-cli `deleteOutDir: true` made a second `nest build` emit no `dist/` (bug found by the Task 3 reviewer).
+- **Correction:** Set `"incremental": false` in `tsconfig.build.json`. The same fix commit pinned `@types/node` to ^22 (npm had resolved 26 for a Node 22 target) and restored a `jest.config.ts` regex backslash the implementer had dropped.
+- **Decision:** Fixes applied in a follow-up commit.
+
+## 2026-10-15 Env schema placeholder check and ConfigModule type
+- **Prompt:** Implement the Task 4 environment schema from the plan.
+- **AI output:** The plan's placeholder check only inspected the raw base64 string, so a base64-wrapped placeholder passed; its own test case `placeholder` would not have been rejected for that reason. `appConfigModule` was typed as returning `DynamicModule`.
+- **Correction:** The check now scans both the raw and the base64-decoded forms. `ConfigModule.forRoot` in `@nestjs/config` 4.0.4 returns `Promise<DynamicModule>`, so the return type of `appConfigModule` was changed accordingly.
+- **Decision:** Both corrections kept.
+
+## 2026-10-15 argon2 0.45 typings and PHC parameter order
+- **Prompt:** Implement the Task 5 password hasher exactly as written in the plan.
+- **AI output:** The plan's code used `argon2.Options` and tested for hash parameters in the order `m,t,p`.
+- **Correction:** argon2 0.45 exports the options type as `HashOptions` (`argon2.Options` failed to compile), and it emits the parameters as `m,p,t`, so the plan's regex failed. Renamed the type, and made the spec's regex order-independent while still requiring m=19456, t=2, p=1. While transcribing the spec, one backslash in the special-characters list was dropped; caught by lint and restored, so all 32 characters are tested.
+- **Decision:** Minimal fixes; hasher interface and test intent unchanged.
