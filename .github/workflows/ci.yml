@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports: ["27017:27017"]
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping:1}).ok'"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      MONGODB_URI: mongodb://127.0.0.1:27017
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck (strict)
+        run: npm run typecheck
+      - name: Lint OpenAPI contract
+        run: npm run lint:api -w backend
+      - name: Unit tests
+        run: npm run test:unit
+      - name: Integration tests (real MongoDB)
+        run: npm run test:int
+      - name: Build
+        run: npm run build
+      - name: Audit production dependencies
+        run: npm audit --audit-level=high --omit=dev
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: has
+        run: |
+          if [ -f frontend/package.json ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.has.outputs.present == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.has.outputs.present == 'true'
+        run: npm ci
+      - if: steps.has.outputs.present == 'true'
+        run: npm run lint -w frontend
+      - if: steps.has.outputs.present == 'true'
+        run: npm run typecheck -w frontend
+      - if: steps.has.outputs.present == 'true'
+        run: npm test -w frontend --if-present
+      - if: steps.has.outputs.present == 'true'
+        run: npm run build -w frontend
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image (build check only; nothing is pushed or deployed)
+        run: |
+          if [ -f backend/Dockerfile ]; then docker build -f backend/Dockerfile -t eg-backend:ci .; else echo "no backend/Dockerfile"; fi
+      - name: Build frontend image (only if a Dockerfile exists)
+        run: |
+          if [ -f frontend/Dockerfile ]; then docker build -f frontend/Dockerfile -t eg-frontend:ci frontend; else echo "no frontend/Dockerfile"; fi

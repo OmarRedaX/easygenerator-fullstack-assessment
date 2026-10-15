@@ -1,0 +1,236 @@
+openapi: 3.1.0
+info:
+  title: Easygenerator Auth API
+  version: 0.1.0
+  description: |
+    Cookie-session authentication (sign up, sign in, logout, protected `me`).
+    The session cookie is `httpOnly`, `SameSite=Lax`. Every unsafe request (POST) must carry an `Origin`
+    header equal to the configured frontend origin (or a matching `Referer`); otherwise it fails closed with 403.
+    Supported topology: frontend and API on the same site.
+
+    Every response carries an `X-Request-Id` header (also exposed to browsers through CORS). A client may send its
+    own `X-Request-Id` (8-64 characters of `A-Za-z0-9._-`); anything else is replaced by a generated id. The same
+    value is returned as `requestId` in error bodies. Any operation can also answer 500 (unexpected error, generic
+    body) and, because the JSON body parser runs first, 400 / 413 for a malformed or oversized body.
+servers:
+  - url: /api
+tags:
+  - name: auth
+    description: Sign up, sign in, logout and the protected current-user endpoint.
+  - name: health
+    description: Liveness check including a MongoDB ping.
+paths:
+  /auth/signup:
+    post:
+      tags: [auth]
+      operationId: signUp
+      summary: Create an account and start a session
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SignUpRequest' }
+      responses:
+        '201':
+          description: Account created; session cookie set.
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SetCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Email already registered.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /auth/signin:
+    post:
+      tags: [auth]
+      operationId: signIn
+      summary: Verify credentials and start a session (new session id)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SignInRequest' }
+      responses:
+        '200':
+          description: Signed in; session cookie set.
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SetCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserEnvelope' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401':
+          description: Invalid email or password (identical for unknown email and wrong password).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      summary: Destroy the server-side session and clear the cookie
+      security: [{ cookieAuth: [] }]
+      responses:
+        '204':
+          description: Logged out; the session cookie is cleared.
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/ClearedCookie' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /auth/me:
+    get:
+      tags: [auth]
+      operationId: getMe
+      summary: Protected endpoint - the current user
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: The authenticated user.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserEnvelope' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /health:
+    get:
+      tags: [health]
+      operationId: getHealth
+      summary: Liveness and MongoDB ping
+      security: []
+      responses:
+        '200':
+          description: Healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, enum: [ok] }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '503':
+          description: Database unavailable.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sid
+  headers:
+    SetCookie:
+      description: Session cookie (`sid`), httpOnly, SameSite=Lax, Secure in production, 7-day absolute lifetime.
+      schema: { type: string }
+    ClearedCookie:
+      description: Clears the session cookie (`sid=;` with an expiry in the past).
+      schema: { type: string }
+  schemas:
+    SignUpRequest:
+      type: object
+      additionalProperties: false
+      required: [email, name, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254, description: Trimmed and lowercased by the server. }
+        name: { type: string, minLength: 3, maxLength: 80, description: Trimmed by the server. }
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          description: >-
+            At least one letter [A-Za-z], one digit [0-9] and one special character from the ASCII
+            punctuation set. A space is not a special character.
+          pattern: '^(?=.*[A-Za-z])(?=.*[0-9])(?=.*[!-/:-@\[-`{-~]).{8,128}$'
+    SignInRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { type: string, minLength: 1 }
+    User:
+      type: object
+      required: [id, email, name, createdAt]
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        name: { type: string }
+        createdAt: { type: string, format: date-time }
+    UserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+    Error:
+      type: object
+      required: [statusCode, error, message, requestId]
+      properties:
+        statusCode: { type: integer }
+        error: { type: string }
+        message: { type: string }
+        requestId: { type: string }
+        details:
+          type: array
+          items:
+            type: object
+            required: [field, messages]
+            properties:
+              field: { type: string }
+              messages: { type: array, items: { type: string } }
+  responses:
+    ValidationError:
+      description: Validation failed (per-field `details`) or malformed JSON.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: >-
+        Missing, invalid or expired session. For an expired session, or a session whose user no longer exists, the
+        session is destroyed and the response also clears the cookie (`Set-Cookie`).
+      headers:
+        Set-Cookie: { $ref: '#/components/headers/ClearedCookie' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: >-
+        CSRF check failed: `Sec-Fetch-Site: cross-site`, an `Origin` that is not the configured origin (including
+        the literal `null`), or, with no `Origin`, a missing/mismatched `Referer`.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    PayloadTooLarge:
+      description: Request body over 16 kb.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooManyRequests:
+      description: Rate limit exceeded.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    InternalError:
+      description: Unexpected error; generic body, details are only in the server log (look up `requestId`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
