@@ -5,6 +5,8 @@ type PasswordFieldProps = Omit<ComponentPropsWithRef<typeof Field>, 'type' | 'tr
 
 export function PasswordField({ disabled, ...rest }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
+  // A read-only field (form is submitting) keeps focus but must not be revealed or hidden mid-request.
+  const locked = disabled === true || rest.readOnly === true;
 
   return (
     <Field
@@ -14,7 +16,7 @@ export function PasswordField({ disabled, ...rest }: PasswordFieldProps) {
       trailing={
         <button
           type="button"
-          disabled={disabled}
+          disabled={locked}
           aria-pressed={visible}
           onClick={() => {
             setVisible((current) => !current);

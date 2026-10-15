@@ -5,9 +5,11 @@ interface FieldProps extends ComponentPropsWithRef<'input'> {
   error?: string | undefined;
   /** Rendered inside the input box, on the right (the show/hide control). */
   trailing?: ReactNode;
+  /** Rendered under the input, before the error (for example the live password checklist). */
+  hint?: ReactNode;
 }
 
-export function Field({ label, error, trailing, id, className = '', 'aria-describedby': describedBy, ...rest }: FieldProps) {
+export function Field({ label, error, trailing, hint, id, className = '', 'aria-describedby': describedBy, ...rest }: FieldProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const errorId = `${inputId}-error`;
@@ -29,11 +31,12 @@ export function Field({ label, error, trailing, id, className = '', 'aria-descri
             'transition-[border-color,box-shadow] duration-150 ease-soft hover:border-text/40 ' +
             'focus-visible:border-accent focus-visible:ring-4 focus-visible:ring-ring ' +
             'aria-invalid:border-danger aria-invalid:focus-visible:ring-danger-bg ' +
-            `disabled:cursor-not-allowed disabled:opacity-55 ${trailing ? 'pr-20' : ''} ${className}`
+            `disabled:cursor-not-allowed disabled:opacity-55 read-only:opacity-70 ${trailing ? 'pr-20' : ''} ${className}`
           }
         />
         {trailing}
       </div>
+      {hint}
       {error && (
         <p id={errorId} role="alert" className="animate-fade mt-1.5 ml-0.5 text-[13px] leading-snug text-danger">
           {error}

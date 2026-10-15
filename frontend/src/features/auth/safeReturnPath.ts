@@ -10,3 +10,9 @@ export function safeReturnPath(value: unknown): string {
   const pathname = value.split(/[?#]/, 1)[0] ?? '/';
   return GUEST_PATHS.has(pathname) ? '/' : value;
 }
+
+/** Reads the `from` the route guard stored in router state and makes it safe to navigate to. */
+export function returnPathFromState(state: unknown): string {
+  if (typeof state !== 'object' || state === null || !('from' in state)) return '/';
+  return safeReturnPath(state.from);
+}
