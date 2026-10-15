@@ -4,6 +4,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import session from 'express-session';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
+import { bodyParserErrorMiddleware } from './common/body-parser-error.middleware';
 import { SESSION_ABSOLUTE_TTL_MS } from './common/constants';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 import { requestIdMiddleware } from './common/request-id.middleware';
@@ -24,8 +25,11 @@ export function configureApp(app: NestExpressApplication): void {
 
   app.use(requestIdMiddleware);
   app.use(helmet());
+  const allowedOrigin = config.get('CORS_ORIGIN', { infer: true });
   app.enableCors({
-    origin: config.get('CORS_ORIGIN', { infer: true }),
+    // Exact match only: a foreign Origin gets no CORS headers at all (a static string would echo ours to everyone).
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) =>
+      callback(null, origin === allowedOrigin),
     credentials: true,
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'X-Request-Id'],
@@ -43,6 +47,7 @@ export function configureApp(app: NestExpressApplication): void {
     }),
   );
   app.useBodyParser('json', { limit: '16kb' });
+  app.use(bodyParserErrorMiddleware);
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
