@@ -9,6 +9,7 @@ import { SESSION_ABSOLUTE_TTL_MS } from './common/constants';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 import { requestIdMiddleware } from './common/request-id.middleware';
 import type { Env } from './config/env.schema';
+import { setupSwagger } from './docs/swagger';
 import { sessionCookieOptions } from './modules/auth/session-cookie';
 import { SessionStoreService } from './modules/auth/session-store';
 
@@ -60,4 +61,5 @@ export function configureApp(app: NestExpressApplication): void {
   app.setGlobalPrefix('api');
   app.useLogger(app.get(Logger));
   app.enableShutdownHooks();
+  setupSwagger(app);
 }
