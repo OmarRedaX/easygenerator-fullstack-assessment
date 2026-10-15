@@ -77,7 +77,13 @@ export default tseslint.config(
     },
   },
   {
-    files: ['vite.config.ts', 'eslint.config.mjs'],
+    files: ['vite.config.ts'],
+    languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    // Plain JS config file: outside the TypeScript project, so no type-aware rules.
+    files: ['eslint.config.mjs'],
+    extends: [tseslint.configs.disableTypeChecked],
     languageOptions: { globals: { ...globals.node } },
   },
 );

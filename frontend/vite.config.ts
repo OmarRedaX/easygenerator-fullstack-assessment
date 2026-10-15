@@ -7,7 +7,7 @@ import { defineConfig, loadEnv } from 'vite';
 // (no changeOrigin), which the backend's CSRF guard compares with CORS_ORIGIN.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const apiTarget = env['API_PROXY_TARGET'] ?? 'http://localhost:3000';
+  const apiTarget = env.API_PROXY_TARGET ?? 'http://localhost:3000';
 
   return {
     plugins: [react(), tailwindcss()],
