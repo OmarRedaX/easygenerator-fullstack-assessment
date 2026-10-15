@@ -156,7 +156,7 @@ invalid field. Client validation is a convenience; the server stays authoritativ
 
 | Item | Decision |
 |---|---|
-| Frontend branch base | `feat/frontend-auth` is cut from `feat/backend-auth` because the backend is not yet on `main`; the PR targets `main` once the backend PR is merged by the owner (never merged automatically). |
+| Frontend branch base | The backend is merged into `main` (PR #3). `feat/frontend-auth` descends from the backend tip, which is an ancestor of `main`, so no rebase is needed and the PR targets `main` directly (never merged automatically). |
 | Password rule drift | Mirrored constant plus a test pinned to the contract regex. |
 | Proxy rewriting `Origin` | Documented in section 2; the README adds a curl-free manual check (sign up in the browser, expect 201, not 403). |
 | `.superpowers/` mockups | Added to `.gitignore`; not part of the deliverable. |
