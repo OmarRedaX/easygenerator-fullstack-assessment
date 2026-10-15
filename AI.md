@@ -34,7 +34,7 @@ output was wrong.
 - "Execute Task N exactly as written, run its verification steps": caught plan defects early because the plan's own
   commands were run (lint, compose, build) instead of trusting the plan text. See "Plan contract failed its own lint".
 - Asking the reviewers for concrete `file:line` defects with a failure scenario, then refuting each one by running
-  it, found the form-body limit bypass that nine earlier tasks had missed. See "Review gate findings".
+  it, found the form-body limit bypass that the earlier test-first tasks had missed. See "Review gate findings".
 - "Fix the code, not the test, unless the test contradicts the spec" in the security suite: both failures were real
   code defects. See "CORS echoed to foreign origins and malformed JSON lost its message".
 
