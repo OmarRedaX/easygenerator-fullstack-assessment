@@ -8,6 +8,7 @@ const base = {
 };
 
 const config: Config = {
+  testTimeout: 30000, // not honoured inside `projects` entries
   projects: [
     { ...base, displayName: 'unit', testMatch: ['<rootDir>/src/**/*.spec.ts'] },
     {
@@ -15,7 +16,6 @@ const config: Config = {
       displayName: 'int',
       testMatch: ['<rootDir>/test/**/*.int-spec.ts'],
       setupFiles: ['<rootDir>/test/setup-env.ts'],
-      testTimeout: 30000,
     },
   ],
   collectCoverageFrom: ['src/**/*.ts', '!src/main.ts', '!src/**/*.module.ts', '!src/**/*.spec.ts'],

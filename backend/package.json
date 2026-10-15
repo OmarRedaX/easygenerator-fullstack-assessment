@@ -9,8 +9,8 @@
     "lint": "eslint \"{src,test}/**/*.ts\"",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test:unit": "jest --selectProjects unit --verbose=false",
-    "test:int": "jest --selectProjects int --runInBand",
-    "test:cov": "jest --coverage --runInBand",
+    "test:int": "node --experimental-vm-modules --disable-warning=ExperimentalWarning ../node_modules/jest/bin/jest.js --selectProjects int --runInBand",
+    "test:cov": "node --experimental-vm-modules --disable-warning=ExperimentalWarning ../node_modules/jest/bin/jest.js --coverage --runInBand",
     "lint:api": "redocly lint ../contracts/openapi.yaml",
     "bench:argon2": "ts-node scripts/bench-argon2.ts"
   },
