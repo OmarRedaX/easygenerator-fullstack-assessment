@@ -1,11 +1,14 @@
+import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
 import { Logo } from '../../components/ui/Logo';
 import { useDocumentTitle } from '../../components/useDocumentTitle';
 import { useSession } from '../auth/session';
+import { useLogout } from '../auth/useLogout';
 
 export function WelcomePage() {
   useDocumentTitle('Easygenerator');
   const { data: user } = useSession();
+  const { signOut, pending, alert } = useLogout();
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -14,9 +17,22 @@ export function WelcomePage() {
           <Logo size="sm" />
           Easygenerator
         </div>
-        <Button variant="ghost">Sign out</Button>
+        <Button
+          variant="ghost"
+          loading={pending}
+          onClick={() => {
+            void signOut();
+          }}
+        >
+          {pending ? 'Signing out...' : 'Sign out'}
+        </Button>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center gap-3.5 px-6 py-10 text-center">
+        {alert && (
+          <div className="w-full max-w-sm text-left">
+            <Alert requestId={alert.requestId}>{alert.message}</Alert>
+          </div>
+        )}
         {user && (
           <span className="animate-rise-late inline-flex max-w-full items-center gap-2 rounded-full border border-line bg-surface py-1.5 pr-3.5 pl-2 text-sm text-muted">
             <span
