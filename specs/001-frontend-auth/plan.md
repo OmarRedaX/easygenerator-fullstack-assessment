@@ -29,7 +29,7 @@ non-root nginx image, and README instructions. Research (`research.md`) settled 
 
 **Project Type**: Web application, frontend workspace of an existing npm-workspaces monorepo (backend already merged)
 
-**Performance Goals**: Instant press feedback (state change on pointer-down); first load of the auth pages under ~100 KB gzipped JS+CSS (no animation/component libraries, system fonts); sign-up to welcome page under 60 s for a user (SC-001)
+**Performance Goals**: Instant press feedback (state change on pointer-down); first load of the auth pages around 140 KB gzipped JS+CSS (measured: 132 KB JS + 6 KB CSS; originally targeted ~100 KB; no animation/component libraries, system fonts); sign-up to welcome page under 60 s for a user (SC-001)
 
 **Constraints**: Same-origin `/api` only; CSP without `'unsafe-inline'` (no inline styles or scripts); no storage of credentials/session data (FR-017); reuse backend as-is (no backend change); new dependencies must be justified (Principle VI)
 

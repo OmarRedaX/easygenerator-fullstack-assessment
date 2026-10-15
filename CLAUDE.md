@@ -9,6 +9,9 @@ Source of intent: `docs/superpowers/specs/2026-10-15-auth-assessment-design.md`.
 ## Workflow
 `/brainstorm` → `/construct-spec` → `/develop` (tests first) → `/review-code` → `/update-docs`.
 Backend must be complete and green before any frontend work.
+The frontend is driven by spec-kit instead: `/speckit-constitution` → `/speckit-specify` → `/speckit-plan` →
+`/speckit-tasks` → `/speckit-implement`, then `/review-code` and `/update-docs`. Its rules are in
+`frontend/CLAUDE.md` and `.specify/memory/constitution.md`; the backend keeps the commands above.
 
 ## Git rules
 Issue → `feat/...` branch → conventional commits → push → PR to `main` with test evidence.

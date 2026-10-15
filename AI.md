@@ -5,7 +5,7 @@ happened. Entry titles are quoted so each claim can be looked up.
 
 ## Overview
 
-The backend (NestJS + MongoDB sign up / sign in) was built with Claude Code. The workflow was docs first: a design
+The backend (NestJS + MongoDB sign up / sign in) and the React frontend were built with Claude Code. The workflow was docs first: a design
 spec, then an implementation plan, then test-first implementation task by task, then a multi-reviewer review gate.
 The AI wrote most of the code. I made the security decisions, and the log records where I overrode it and where its
 output was wrong.
@@ -61,6 +61,38 @@ From the log, in order:
 - Review gate: urlencoded parser bypass, cookie-name validation, vacuous session tests, test env isolation,
   unauthenticated dev Mongo on all interfaces, contract and docs drift.
 
+## Frontend: brainstorm, spec-kit and the Apple Design Skill
+
+The frontend (React + TypeScript, `frontend/`) used a different workflow from the backend, chosen by me: a
+brainstorm with an interactive browser mockup, then GitHub's spec-kit (`/speckit-constitution`, `-specify`, `-plan`,
+`-tasks`, `-implement`) instead of the plan-then-develop commands, with the installed Apple Design Skill as the
+visual authority. Entries in `docs/AI-LOG.md`: "Frontend brainstorm and design spec", "Git state check and spec-kit
+scaffold", "/speckit-plan: dependency audit changed three design decisions", "/speckit-tasks: 61 test-first tasks",
+"/speckit-implement: setup through session guards", "Accessibility sweep, real-browser check and a back/forward-cache
+hole", "nginx image, CI and compose", "A broad `git add` committed a file that was not mine".
+
+| Area | What the AI generated | How it was verified |
+|---|---|---|
+| Visual direction | One mockup for sign-up / sign-in / welcome plus validation, loading, error and mobile states | I approved it; the contrast audit later found a real flaw in it (below) |
+| Spec, plan, tasks | spec-kit constitution v1.0.0, feature spec, plan, research, data model, contracts, 61 test-first tasks | Plan claims were checked against the registry (`npm view`) and the repo, not memory |
+| Frontend code | Validation, API client, error mapping, tokens, 8 UI components, session, pages, guards, logout, nginx image | Red-then-green per task; mutation checks on the risky tests; real Chrome run against the real backend, also through the nginx image |
+
+What I corrected or decided differently from the AI's proposal:
+- **Same-origin `/api` proxy (option A)** with four tightenings I required: proxies must keep the `/api` prefix;
+  `CORS_ORIGIN` must equal the browser-visible origin; a 401 from `/auth/me` is a normal signed-out result with no
+  retry and sign-in/sign-up cancel the pending check before storing the user; a request reference is shown only when
+  the server sent one, and logout clears the session only after success or 401.
+- **Tailwind with hand-built components** over shadcn or MUI, and the Apple Design Skill as the visual standard.
+- **spec-kit replaces `writing-plans`** for the frontend; the backend keeps its commands.
+- The AI's own plan was wrong in places and the dependency audit caught it: `eslint-plugin-jsx-a11y` is incompatible
+  with ESLint 10 (replaced by axe-core tests), TypeScript had to stay on 6.x for `typescript-eslint`, the planned
+  Docker build context could not see the lockfile (CI changed to the repo root), and the approved dark-mode button
+  failed WCAG (white on `#0a84ff` is 3.65:1; the fill is now a separate token that stays `#0071e3`).
+- Bugs found late, not by the unit tests: the sign-in guard overrode the return path (found by an App-level test),
+  and Back after sign-out restored a cached protected page (found in the real browser).
+- I made one process mistake: a broad `git add` staged my untracked `docs/postman/` file twice; it is untracked
+  again and the net diff contains no copy (see the last log entry).
+
 ## Decisions that differ from AI suggestions
 
 - **Cookie sessions over access JWT + rotating refresh.** The AI recommended JWT; I chose server-side sessions.
@@ -75,6 +107,12 @@ From the log, in order:
 
 ## Verification
 
+- Frontend: 259 tests in 25 files (coverage 98.7 / 94.8 / 98.0 / 99.5 % statements / branches / functions / lines,
+  80% line threshold enforced on `src/lib` and `src/features`), strict typecheck, type-aware ESLint with
+  constitution rules (no web storage, no inline styles, layering imports), production build, axe on every page
+  state, and `frontend/scripts/verify-image.sh` against the nginx image. A real Chrome run against the real backend
+  covered sign-up, validation, wrong password, reload, sign-out, responsive widths and the production CSP. Not
+  verified by eye: light mode and reduced-motion (covered by tests only).
 - Unit tests (129+) and integration tests against a real MongoDB in an isolated `auth_test_*` database; coverage
   98.7 / 87.5 / 98.6 / 99.7 % (statements / branches / functions / lines) against an enforced 80% threshold.
 - Strict typecheck, ESLint, Redocly lint of the contract, `npm audit --audit-level=high --omit=dev`.
@@ -91,3 +129,6 @@ From the log, in order:
   review gate.
 - Pin dependency versions in the plan (the unpinned install pulled ESM-only Nest 12).
 - Make the contract-drift test check statuses and schemas, not only the route set (recorded as future work).
+- Frontend: audit the approved mockup's contrast before building on it, not after; run the real app in a browser
+  earlier (the back/forward-cache hole and the layout shift that broke my own click only showed up there); and
+  stage commits with explicit paths from the start.
