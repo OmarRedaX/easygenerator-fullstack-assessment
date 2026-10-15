@@ -2,7 +2,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
-import { configureApp } from '../../src/app.setup';
+import { configureApp, NEST_APP_OPTIONS } from '../../src/app.setup';
 import { CLOCK, Clock } from '../../src/common/clock';
 import { createTestDatabase } from './db';
 
@@ -64,7 +64,7 @@ export async function createTestApp(env: Record<string, string> = {}): Promise<T
       .overrideProvider(CLOCK)
       .useValue(clock)
       .compile();
-    const nestApp = moduleRef.createNestApplication<NestExpressApplication>();
+    const nestApp = moduleRef.createNestApplication<NestExpressApplication>({ ...NEST_APP_OPTIONS });
     app = nestApp;
     configureApp(nestApp);
     await nestApp.init();

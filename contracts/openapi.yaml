@@ -7,6 +7,11 @@ info:
     The session cookie is `httpOnly`, `SameSite=Lax`. Every unsafe request (POST) must carry an `Origin`
     header equal to the configured frontend origin (or a matching `Referer`); otherwise it fails closed with 403.
     Supported topology: frontend and API on the same site.
+
+    Every response carries an `X-Request-Id` header (also exposed to browsers through CORS). A client may send its
+    own `X-Request-Id` (8-64 characters of `A-Za-z0-9._-`); anything else is replaced by a generated id. The same
+    value is returned as `requestId` in error bodies. Any operation can also answer 500 (unexpected error, generic
+    body) and, because the JSON body parser runs first, 400 / 413 for a malformed or oversized body.
 servers:
   - url: /api
 tags:
@@ -43,6 +48,7 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
   /auth/signin:
     post:
       tags: [auth]
@@ -71,6 +77,7 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
   /auth/logout:
     post:
       tags: [auth]
@@ -78,10 +85,16 @@ paths:
       summary: Destroy the server-side session and clear the cookie
       security: [{ cookieAuth: [] }]
       responses:
-        '204': { description: Logged out. }
+        '204':
+          description: Logged out; the session cookie is cleared.
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/ClearedCookie' }
+        '400': { $ref: '#/components/responses/ValidationError' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
   /auth/me:
     get:
       tags: [auth]
@@ -96,6 +109,7 @@ paths:
               schema: { $ref: '#/components/schemas/UserEnvelope' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
   /health:
     get:
       tags: [health]
@@ -112,6 +126,7 @@ paths:
                 required: [status]
                 properties:
                   status: { type: string, enum: [ok] }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
         '503':
           description: Database unavailable.
           content:
@@ -126,6 +141,9 @@ components:
   headers:
     SetCookie:
       description: Session cookie (`sid`), httpOnly, SameSite=Lax, Secure in production, 7-day absolute lifetime.
+      schema: { type: string }
+    ClearedCookie:
+      description: Clears the session cookie (`sid=;` with an expiry in the past).
       schema: { type: string }
   schemas:
     SignUpRequest:
@@ -186,12 +204,18 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
     Unauthorized:
-      description: Missing, invalid or expired session.
+      description: >-
+        Missing, invalid or expired session. For an expired session, or a session whose user no longer exists, the
+        session is destroyed and the response also clears the cookie (`Set-Cookie`).
+      headers:
+        Set-Cookie: { $ref: '#/components/headers/ClearedCookie' }
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
     Forbidden:
-      description: CSRF check failed (missing/mismatched Origin and Referer).
+      description: >-
+        CSRF check failed: `Sec-Fetch-Site: cross-site`, an `Origin` that is not the configured origin (including
+        the literal `null`), or, with no `Origin`, a missing/mismatched `Referer`.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
@@ -202,6 +226,11 @@ components:
           schema: { $ref: '#/components/schemas/Error' }
     TooManyRequests:
       description: Rate limit exceeded.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    InternalError:
+      description: Unexpected error; generic body, details are only in the server log (look up `requestId`).
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }

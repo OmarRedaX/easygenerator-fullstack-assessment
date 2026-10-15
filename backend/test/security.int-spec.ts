@@ -100,6 +100,13 @@ describe('security (real MongoDB)', () => {
       expect(JSON.stringify(res.body)).not.toMatch(/stack|node_modules/);
     });
 
+    it('does not parse form-encoded bodies, so the 16 kb JSON-only limit cannot be sidestepped', async () => {
+      const body = `email=${encodeURIComponent(creds.email)}&password=${'x'.repeat(90_000)}`;
+      const res = await t.agent().post('/api/auth/signin').set('Origin', ORIGIN)
+        .set('Content-Type', 'application/x-www-form-urlencoded').send(body).expect(400);
+      expect(res.body).toMatchObject({ statusCode: 400, message: 'Validation failed' });
+    });
+
     it('rejects a non-JSON content type body as a validation error', async () => {
       await t.agent().post('/api/auth/signin').set('Origin', ORIGIN).set('Content-Type', 'text/plain').send('email=a').expect(400);
     });

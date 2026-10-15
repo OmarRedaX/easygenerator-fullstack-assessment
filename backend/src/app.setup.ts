@@ -16,6 +16,13 @@ import { SessionStoreService } from './modules/auth/session-store';
 const toDetails = (errors: ValidationError[]) =>
   errors.map((e) => ({ field: e.property, messages: Object.values(e.constraints ?? {}) }));
 
+/**
+ * Nest options both main.ts and the test helper must pass. `bodyParser: false` stops Nest registering its default
+ * JSON and urlencoded parsers (the urlencoded one has a 100 kb limit and the API is JSON-only); configureApp then
+ * adds the single 16 kb JSON parser.
+ */
+export const NEST_APP_OPTIONS = { bodyParser: false } as const;
+
 /** Shared by main.ts and the integration tests so both run the exact same pipeline. */
 export function configureApp(app: NestExpressApplication): void {
   const config = app.get<ConfigService<Env, true>>(ConfigService);

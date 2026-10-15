@@ -18,6 +18,13 @@ describe('auth (real MongoDB)', () => {
   const post = (agent: ReturnType<TestApp['agent']>, path: string, body?: object) =>
     agent.post(`/api${path}`).set('Origin', ORIGIN).send(body);
 
+  /** Whether the server-side session document behind a `sid=s%3A<id>.<sig>` cookie still exists in Mongo. */
+  const sessionExists = async (cookie: string): Promise<boolean> => {
+    const id = decodeURIComponent(cookie.split('=')[1] ?? '').replace(/^s:/, '').split('.')[0];
+    const conn = t.app.get<Connection>(getConnectionToken());
+    return (await conn.collection('sessions').countDocuments({ _id: id as never })) > 0;
+  };
+
   describe('POST /auth/signup', () => {
     it('201: creates the user, starts a session, leaks nothing sensitive', async () => {
       const res = await post(t.agent(), '/auth/signup', valid).expect(201);
@@ -85,8 +92,8 @@ describe('auth (real MongoDB)', () => {
       expect(docs.length).toBeGreaterThan(0);
       for (const doc of docs) {
         const data = typeof doc.session === 'string' ? JSON.parse(doc.session) : doc.session;
-        expect(Object.keys(data).sort()).toEqual(['absoluteExpiresAt', 'cookie', 'userId'].filter((k) => k in data));
-        expect(Object.keys(data)).not.toEqual(expect.arrayContaining(['email', 'password', 'passwordHash', 'name']));
+        // Exactly these keys: nothing missing, nothing extra (no email, name, password, hash...).
+        expect(Object.keys(data).sort()).toEqual(['absoluteExpiresAt', 'cookie', 'userId']);
       }
       expect(res.body.user.email).toBe(valid.email);
     });
@@ -115,25 +122,31 @@ describe('auth (real MongoDB)', () => {
     });
 
     it('enforces absoluteExpiresAt on the server regardless of cookie/TTL', async () => {
-      const agent = t.agent();
-      await post(agent, '/auth/signin', { email: valid.email, password: valid.password }).expect(200);
+      const login = await post(t.agent(), '/auth/signin', { email: valid.email, password: valid.password }).expect(200);
+      const cookie = sid(login);
+      const server = t.app.getHttpServer();
       t.clock.advance(SESSION_ABSOLUTE_TTL_MS - 1);
-      await agent.get('/api/auth/me').expect(200);
+      await request(server).get('/api/auth/me').set('Cookie', cookie).expect(200);
       t.clock.advance(1);
-      const expired = await agent.get('/api/auth/me').expect(401);
+      const expired = await request(server).get('/api/auth/me').set('Cookie', cookie).expect(401);
       expect(expired.body.message).toBe('Session expired');
       expect(setCookie(expired)[0] ?? '').toMatch(/^sid=;/);
-      const again = await agent.get('/api/auth/me').expect(401);
-      expect(again.body.message).toBe('Authentication required'); // session was destroyed
+      // Replay the old cookie explicitly (an agent would have dropped it): if the server-side session were
+      // not destroyed this would say "Session expired" again, not "Authentication required".
+      const replay = await request(server).get('/api/auth/me').set('Cookie', cookie).expect(401);
+      expect(replay.body.message).toBe('Authentication required');
+      expect(await sessionExists(cookie)).toBe(false);
     });
 
     it('a session whose user was deleted is destroyed and gets 401', async () => {
-      const agent = t.agent();
-      await post(agent, '/auth/signup', { email: 'ghost@example.com', name: 'Ghost', password: 'Passw0rd!' }).expect(201);
+      const signup = await post(t.agent(), '/auth/signup', { email: 'ghost@example.com', name: 'Ghost', password: 'Passw0rd!' }).expect(201);
+      const cookie = sid(signup);
+      expect(await sessionExists(cookie)).toBe(true);
       const conn = t.app.get<Connection>(getConnectionToken());
       await conn.collection('users').deleteOne({ email: 'ghost@example.com' });
-      const res = await agent.get('/api/auth/me').expect(401);
+      const res = await request(t.app.getHttpServer()).get('/api/auth/me').set('Cookie', cookie).expect(401);
       expect(setCookie(res)[0] ?? '').toMatch(/^sid=;/);
+      expect(await sessionExists(cookie)).toBe(false); // the server-side session document is gone
     });
   });
 

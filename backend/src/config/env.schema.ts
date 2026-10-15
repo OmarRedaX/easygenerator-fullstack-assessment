@@ -32,7 +32,8 @@ export const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   MONGODB_URI: z.string().regex(/^mongodb(\+srv)?:\/\/.+/, 'must be a mongodb:// or mongodb+srv:// URI'),
   SESSION_SECRET: sessionSecret,
-  SESSION_COOKIE_NAME: z.string().min(1).default('sid'),
+  // RFC 6265 cookie-name token; anything else would only fail later, when the first session cookie is serialised.
+  SESSION_COOKIE_NAME: z.string().regex(/^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/, 'must be a valid cookie name token').default('sid'),
   CORS_ORIGIN: corsOrigin,
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
   ARGON2_MEMORY_KIB: z.coerce.number().int().min(19456).default(19456),

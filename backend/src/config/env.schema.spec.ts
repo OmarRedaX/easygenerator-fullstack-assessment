@@ -24,6 +24,14 @@ describe('parseEnv', () => {
     expect(() => parseEnv({ ...valid, SESSION_SECRET: secret })).toThrow(/SESSION_SECRET/);
   });
 
+  it.each(['my sid', 'a;b', 'a=b', 'sid\n', 'séssion'])('rejects SESSION_COOKIE_NAME that is not a cookie token: %j', (name) => {
+    expect(() => parseEnv({ ...valid, SESSION_COOKIE_NAME: name })).toThrow(/SESSION_COOKIE_NAME/);
+  });
+
+  it('accepts a valid custom SESSION_COOKIE_NAME', () => {
+    expect(parseEnv({ ...valid, SESSION_COOKIE_NAME: 'eg.sid-1' }).SESSION_COOKIE_NAME).toBe('eg.sid-1');
+  });
+
   it.each(['http://localhost:5173/', 'http://localhost:5173/app', 'localhost:5173', '*'])(
     'rejects CORS_ORIGIN %s', (origin) => {
       expect(() => parseEnv({ ...valid, CORS_ORIGIN: origin })).toThrow(/CORS_ORIGIN/);
