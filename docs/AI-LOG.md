@@ -98,3 +98,9 @@ Running log of AI-assisted steps. Format: `## YYYY-MM-DD <topic>` with **Prompt 
 - **AI output:** The plan's code used `argon2.Options` and tested for hash parameters in the order `m,t,p`.
 - **Correction:** argon2 0.45 exports the options type as `HashOptions` (`argon2.Options` failed to compile), and it emits the parameters as `m,p,t`, so the plan's regex failed. Renamed the type, and made the spec's regex order-independent while still requiring m=19456, t=2, p=1. While transcribing the spec, one backslash in the special-characters list was dropped; caught by lint and restored, so all 32 characters are tested.
 - **Decision:** Minimal fixes; hasher interface and test intent unchanged.
+
+## 2026-10-15 jest --selectProjects swallows file pattern
+- **Prompt:** Run Task 5 specs with `npm run test:unit -w backend -- <pattern>`, using the plan's `jest --selectProjects unit` script.
+- **AI output:** The plan's script form made `-- <pattern>` run all unit suites, because `--selectProjects` is variadic and consumed the pattern as a project name (found by the Task 5 reviewer).
+- **Correction:** The reviewer-suggested `--selectProjects=unit` did not help (the `=` form is still variadic and swallowed the pattern); verified by running it. Fixed with a boolean flag after the project name, `jest --selectProjects unit --verbose=false`, which ends the variadic list. `test:int` already had `--runInBand` there.
+- **Decision:** Fixed in a follow-up commit and verified that `-- password-hasher` runs only that suite.

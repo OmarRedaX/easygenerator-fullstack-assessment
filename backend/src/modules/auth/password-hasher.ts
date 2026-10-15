@@ -31,7 +31,10 @@ export class PasswordHasher {
 
   /** Burns a verification so unknown-email signins cost about the same as wrong-password ones (narrows, does not equalise, timing). */
   async verifyDummy(password: string): Promise<void> {
-    this.dummyHash ??= argon2.hash('dummy-password-for-timing', this.options);
+    this.dummyHash ??= argon2.hash('dummy-password-for-timing', this.options).catch((error: unknown) => {
+      this.dummyHash = undefined; // do not cache a failure; retry on the next call
+      throw error;
+    });
     await this.verify(await this.dummyHash, password);
   }
 }
