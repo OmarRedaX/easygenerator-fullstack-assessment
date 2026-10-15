@@ -10,3 +10,4 @@ coverage/
 .claude/settings.local.json
 graphify-out/
 .DS_Store
+*.tsbuildinfo

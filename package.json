@@ -6,9 +6,9 @@
   "scripts": {
     "lint": "npm run lint -w backend",
     "typecheck": "npm run typecheck -w backend",
-    "test:unit": "npm run test:unit -w backend",
-    "test:int": "npm run test:int -w backend",
-    "test:cov": "npm run test:cov -w backend",
+    "test:unit": "npm run test:unit -w backend --",
+    "test:int": "npm run test:int -w backend --",
+    "test:cov": "npm run test:cov -w backend --",
     "build": "npm run build -w backend"
   }
 }
