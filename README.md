@@ -16,6 +16,50 @@ docs/        system design, ADRs, design spec, implementation plan, AI-LOG
 
 Start with [`docs/system-design.md`](docs/system-design.md). AI usage is documented in [`AI.md`](AI.md).
 
+## File architecture
+
+```
+.
+├── backend/
+│   ├── src/
+│   │   ├── main.ts                     bootstrap
+│   │   ├── app.module.ts               root module
+│   │   ├── app.setup.ts                shared app wiring (pipes, filter, guards, middleware)
+│   │   ├── config/                     zod-validated environment (env.schema.ts, config.module.ts)
+│   │   ├── common/                     cross-cutting pieces
+│   │   │   ├── csrf.guard.ts           fail-closed Origin/Referer check
+│   │   │   ├── http-exception.filter.ts  single error envelope
+│   │   │   ├── request-id.middleware.ts
+│   │   │   ├── body-parser-error.middleware.ts
+│   │   │   ├── logging.ts, clock.ts, constants.ts, request.types.ts
+│   │   │   └── common.module.ts
+│   │   ├── docs/swagger.ts             Swagger UI served from contracts/openapi.yaml
+│   │   └── modules/
+│   │       ├── auth/                   controller, service, DTOs, password policy and hasher (argon2id),
+│   │       │                           Mongo session store, session guard, session cookie, throttling
+│   │       ├── users/                  schema, repository (E11000-safe), service, errors
+│   │       └── health/                 liveness plus MongoDB ping
+│   ├── test/                           integration tests (*.int-spec.ts) and helpers (isolated test DB, app factory)
+│   ├── scripts/bench-argon2.ts         argon2 timing benchmark
+│   ├── Dockerfile, docker-compose.yml  non-root image; Mongo, plus the API under the `app` profile
+│   ├── .env.example, .env.test         environment templates
+│   ├── jest.config.ts, eslint.config.mjs, tsconfig*.json, nest-cli.json
+│   └── CLAUDE.md                       backend rules
+├── contracts/openapi.yaml              API source of truth
+├── docs/
+│   ├── system-design.md
+│   ├── adr/                            architecture decision records (0001-0006)
+│   ├── superpowers/                    design spec and implementation plan
+│   ├── reviews/                        code review reports
+│   └── AI-LOG.md                       running log AI.md is assembled from
+├── .claude/                            commands and skills for AI-assisted development
+├── .github/workflows/ci.yml            CI pipeline
+├── AI.md, CLAUDE.md, README.md
+└── package.json                        npm workspaces root
+```
+
+Unit tests (`*.spec.ts`) sit next to the code they cover under `backend/src/`.
+
 ## Prerequisites
 
 - Node.js 22
