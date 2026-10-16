@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/coverage
+**/.env
+**/.env.*
+.git
+.superpowers
+.claude
+docs
+specs
+*.pdf
+backend/*
+!backend/package.json

@@ -1,0 +1,62 @@
+# Rendered by the image entrypoint: only ${BACKEND_URL} and ${FORWARDED_HEADERS_MODE} are substituted; nginx
+# variables ($host, $uri, ...) are kept.
+
+# Used by forwarded-trusted.conf only. This nginx speaks plain HTTP; behind a TLS-terminating load balancer the
+# original scheme arrives in X-Forwarded-Proto and must reach the backend (otherwise express-session sees an
+# insecure request and never sends the Secure cookie). Only "http" and "https" are honoured; anything else falls
+# back to our own scheme.
+map $http_x_forwarded_proto $forwarded_proto {
+    default $scheme;
+    "http"  "http";
+    "https" "https";
+}
+
+server {
+    listen 8080;
+    server_name _;
+    server_tokens off;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    gzip on;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # The backend serves every route under /api. proxy_pass has NO URI part, so the original URI (with the
+    # /api prefix) is passed through unchanged. Origin and the other request headers are forwarded as sent:
+    # the backend's CSRF guard compares Origin with CORS_ORIGIN.
+    location /api/ {
+        proxy_pass ${BACKEND_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        # Client identity and scheme headers: "edge" (default) overwrites them from the socket, "trusted" is for a
+        # load balancer in front. An unknown mode makes nginx refuse to start (the include file does not exist).
+        include /etc/nginx/forwarded-${FORWARDED_HEADERS_MODE}.conf;
+    }
+
+    # Hashed filenames: safe to cache for a year. A missing file is a 404, never the SPA shell.
+    location /assets/ {
+        include /etc/nginx/security-headers.conf;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    location = /index.html {
+        include /etc/nginx/security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+    }
+
+    # SPA fallback: every other path is a client-side route.
+    location / {
+        include /etc/nginx/security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+        try_files $uri /index.html;
+    }
+}

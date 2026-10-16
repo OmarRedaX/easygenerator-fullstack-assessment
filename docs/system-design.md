@@ -43,7 +43,28 @@ Protected request (`GET /auth/me`, `POST /auth/logout`): `SessionGuard` requires
 - `sessions` (connect-mongo): TTL index for housekeeping; each document holds only `userId` and
   `absoluteExpiresAt` (plus the cookie metadata express-session adds).
 
-## 4. Key trade-offs
+## 4. Frontend
+
+```
+Browser -> /api (same origin) -> Vite proxy (dev) | nginx (production) -> Nest API
+```
+
+`frontend/` is a React + TypeScript SPA (ADR 0007, spec in `specs/001-frontend-auth/`):
+- `lib/api` — fetch client with base path `/api`, typed auth calls, `ApiError` / `NetworkError` (no React).
+- `lib/validation` — password policy and Zod schemas mirroring the contract; a test reads `contracts/openapi.yaml`.
+- `features/auth` — sign-up and sign-in pages, the session query, route guards, logout and error-to-message mapping.
+- `features/home` — the welcome page. `components/ui` — hand-built presentational components styled with tokens.
+
+Session: there are no tokens on the client. One TanStack Query entry (`['me']`) holds the user, or `null` when
+signed out; a 401 from `GET /auth/me` is a normal answer and is not retried. Sign-in and sign-up cancel any pending
+check before storing the user, so a late 401 cannot overwrite the new session. Logout clears the entry after success
+or 401; other failures keep the user signed in, show the error and recheck. A 401 from any protected request, and a
+page restored from the browser's back/forward cache, send the guards back to the server for the truth.
+
+Routes: `/` (guarded), `/signin` and `/signup` (guest only), everything else redirects to `/`. Guards use `replace`
+navigation and remember a safe return path (single leading `/`, never `//`, never the auth pages).
+
+## 5. Key trade-offs
 
 - Cookie sessions over JWT: immediate revocation at the cost of one lookup per protected request (ADR 0002).
 - Same-site-only hosting keeps CSRF defence to a fail-closed Origin/Referer check, no token (ADR 0003).

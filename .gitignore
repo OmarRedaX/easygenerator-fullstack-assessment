@@ -11,3 +11,5 @@ coverage/
 graphify-out/
 .DS_Store
 *.tsbuildinfo
+.superpowers/
+.claude/skills/apple-design/

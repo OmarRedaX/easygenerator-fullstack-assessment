@@ -1,16 +1,17 @@
 # Easygenerator full stack assessment
 
-Sign up / sign in module: a NestJS + MongoDB backend (this repository's first phase) with cookie-based sessions,
-fail-closed CSRF protection and a hand-written OpenAPI contract. The React + TypeScript frontend is the next phase
-and is not in this branch yet.
+Sign up / sign in module: a NestJS + MongoDB backend with cookie-based sessions, fail-closed CSRF protection and a
+hand-written OpenAPI contract, and a React + TypeScript frontend (sign up, sign in, a protected welcome page) that
+talks to it through one same-origin `/api` path.
 
 ## Repository layout
 
 ```
 backend/     NestJS + MongoDB API
-frontend/    React + TypeScript (later phase)
+frontend/    React + TypeScript SPA (Vite, Tailwind CSS), nginx image
 contracts/   openapi.yaml - the API source of truth
-docs/        system design, ADRs, design spec, implementation plan, AI-LOG
+specs/       spec-kit feature spec, plan, tasks and quickstart for the frontend
+docs/        system design, ADRs, design specs, implementation plan, AI-LOG
 .claude/     commands and skills used for AI-assisted development
 ```
 
@@ -46,7 +47,25 @@ Start with [`docs/system-design.md`](docs/system-design.md). AI usage is documen
 │   ├── .env.example, .env.test         environment templates
 │   ├── jest.config.ts, eslint.config.mjs, tsconfig*.json, nest-cli.json
 │   └── CLAUDE.md                       backend rules
+├── frontend/
+│   ├── src/
+│   │   ├── main.tsx, App.tsx           bootstrap, providers, routes
+│   │   ├── styles/                     Tailwind v4 design tokens (index.css) and their test mirror
+│   │   ├── lib/
+│   │   │   ├── api/                    fetch client, typed auth calls, ApiError / NetworkError (no React)
+│   │   │   └── validation/             password policy and Zod schemas mirroring the contract (no React)
+│   │   ├── features/
+│   │   │   ├── auth/                   sign-up and sign-in pages, session query, route guards, logout, error mapping
+│   │   │   └── home/                   the welcome page
+│   │   ├── components/ui/              Button, Field, PasswordField, PasswordRules, Alert, Splash, Logo, Spinner
+│   │   └── test/                       test setup, render helper, axe helper
+│   ├── nginx/                          proxy and security-header config for the production image
+│   ├── scripts/verify-image.sh         builds the image and checks headers, SPA fallback and the /api proxy
+│   ├── Dockerfile                      build context is the repo root, like the backend's
+│   ├── vite.config.ts, eslint.config.mjs, tsconfig.json
+│   └── CLAUDE.md                       frontend rules
 ├── contracts/openapi.yaml              API source of truth
+├── specs/001-frontend-auth/            spec-kit spec, plan, research, data model, contracts, tasks, quickstart
 ├── docs/
 │   ├── system-design.md
 │   ├── adr/                            architecture decision records (0001-0008)
@@ -54,12 +73,14 @@ Start with [`docs/system-design.md`](docs/system-design.md). AI usage is documen
 │   ├── reviews/                        code review reports
 │   └── AI-LOG.md                       running log AI.md is assembled from
 ├── .claude/                            commands and skills for AI-assisted development
+├── .specify/                           spec-kit templates, scripts and the frontend constitution
 ├── .github/workflows/ci.yml            CI pipeline
 ├── AI.md, CLAUDE.md, README.md
 └── package.json                        npm workspaces root
 ```
 
-Unit tests (`*.spec.ts`) sit next to the code they cover under `backend/src/`.
+Unit tests (`*.spec.ts`) sit next to the code they cover under `backend/src/`; frontend tests (`*.test.ts(x)`)
+sit next to the code they cover under `frontend/src/`.
 
 ## Prerequisites
 
@@ -88,6 +109,69 @@ To run the API in Docker as well (set `API_PORT` if port 3000 is taken):
 ```bash
 SESSION_SECRET=$(openssl rand -base64 32) docker compose -f backend/docker-compose.yml --profile app up -d --build
 ```
+
+## Frontend
+
+React 19 + strict TypeScript single-page app: sign up, sign in and a protected welcome page with sign out. Vite,
+Tailwind CSS v4 with hand-built components, React Router, React Hook Form + Zod, TanStack Query. Tests use Vitest,
+Testing Library and axe-core. It follows an Apple-inspired design system (tokens in
+[`frontend/src/styles/index.css`](frontend/src/styles/index.css)) with light and dark themes from the OS setting,
+accessibility checks, and reduced-motion / reduced-transparency support. Its spec, plan and tasks are in
+[`specs/001-frontend-auth/`](specs/001-frontend-auth/).
+
+### Run it (development)
+
+With the backend from the quick start running:
+
+```bash
+npm ci                     # once, from the repo root
+npm run dev:frontend       # http://localhost:5173
+```
+
+The dev server proxies `/api` to `http://localhost:3000`, so the browser only talks to its own origin (the backend
+requires same-site hosting). If port 3000 is taken, run the API elsewhere and point the proxy at it:
+`API_PROXY_TARGET=http://localhost:3100 npm run dev:frontend`.
+
+`CORS_ORIGIN` in `backend/.env` must equal the origin in the browser's address bar (`http://localhost:5173` in
+development): the CSRF guard compares it with the request's `Origin` even though the request goes through a
+same-origin proxy. A `403` on sign-up or sign-in means that value is wrong or a proxy dropped `Origin`. For the same
+reason port 5173 is fixed (`strictPort`): a silently chosen 5174 would make every request fail.
+
+### Test it
+
+```bash
+npm run lint -w frontend
+npm run typecheck -w frontend
+npm test -w frontend
+npm run test:cov -w frontend   # 80% lines enforced on src/lib and src/features
+npm run build -w frontend
+bash frontend/scripts/verify-image.sh   # builds the production image and checks headers, SPA fallback, /api proxy
+```
+
+The manual acceptance run (13 scenarios against the real backend) is in
+[`specs/001-frontend-auth/quickstart.md`](specs/001-frontend-auth/quickstart.md).
+
+### Production image
+
+`frontend/Dockerfile` builds the app and serves it with non-root nginx on port 8080. nginx proxies `/api/` to
+`BACKEND_URL` (default `http://api:3000`, scheme and host only) without touching the `/api` prefix or the `Origin`
+header. SPA responses carry a Content-Security-Policy without `unsafe-inline` plus the usual hardening headers;
+`/api` responses keep the backend's own. HSTS is not set here: it belongs to the TLS-terminating layer.
+
+```bash
+SESSION_SECRET=$(openssl rand -base64 32) CORS_ORIGIN=http://localhost:8080 \
+  docker compose -f backend/docker-compose.yml --profile app up -d --build    # then open http://localhost:8080
+```
+
+Set `MONGO_PORT`, `API_PORT` or `WEB_PORT` if a default port is taken. In this profile the API is published on loopback only and
+`TRUST_PROXY_HOPS` is set to `1` (the web proxy; override with `API_TRUST_PROXY_HOPS`), so rate limits are per client.
+By default nginx runs in `edge` mode (`FORWARDED_HEADERS_MODE=edge`): it is the first proxy, so it overwrites
+`X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host` from the connection and a client cannot pick its
+rate-limit bucket or claim HTTPS. Behind a TLS-terminating load balancer that you control, start `web` with
+`WEB_FORWARDED_HEADERS_MODE=trusted` and the API with `API_TRUST_PROXY_HOPS=2` (load balancer plus nginx): nginx then
+appends to `X-Forwarded-For` and honours `X-Forwarded-Proto` only when it is exactly `http` or `https`, which keeps the
+`Secure` session cookie working. Use `trusted` only if clients cannot reach `web` or the API directly. The API can take a
+while to boot; an nginx `502` right after start means it is still starting.
 
 ## API
 
@@ -166,8 +250,9 @@ parallelism 1). Run it on the deployment target and raise `ARGON2_*` while signi
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on pull requests and pushes to `main`:
 - **backend:** install, lint, strict typecheck, OpenAPI lint, unit tests, integration tests against a `mongo:7`
   service container, build, `npm audit --audit-level=high --omit=dev`.
-- **frontend:** runs only once `frontend/package.json` exists.
-- **docker:** builds the backend image (build check only; nothing is pushed).
+- **frontend:** install, lint, strict typecheck, tests, production build.
+- **docker:** builds the backend and frontend images (build check only; nothing is pushed). Both build from the
+  repository root because the lockfile lives there.
 
 ## Deployment
 

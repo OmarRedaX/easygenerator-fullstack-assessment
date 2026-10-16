@@ -65,7 +65,7 @@ jobs:
       - if: steps.has.outputs.present == 'true'
         run: npm run typecheck -w frontend
       - if: steps.has.outputs.present == 'true'
-        run: npm test -w frontend --if-present
+        run: npm run test:cov -w frontend
       - if: steps.has.outputs.present == 'true'
         run: npm run build -w frontend
 
@@ -78,4 +78,4 @@ jobs:
           if [ -f backend/Dockerfile ]; then docker build -f backend/Dockerfile -t eg-backend:ci .; else echo "no backend/Dockerfile"; fi
       - name: Build frontend image (only if a Dockerfile exists)
         run: |
-          if [ -f frontend/Dockerfile ]; then docker build -f frontend/Dockerfile -t eg-frontend:ci frontend; else echo "no frontend/Dockerfile"; fi
+          if [ -f frontend/Dockerfile ]; then docker build -f frontend/Dockerfile -t eg-frontend:ci .; else echo "no frontend/Dockerfile"; fi
