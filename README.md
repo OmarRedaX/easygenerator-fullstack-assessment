@@ -36,7 +36,8 @@ Start with [`docs/system-design.md`](docs/system-design.md). AI usage is documen
 │   │   ├── docs/swagger.ts             Swagger UI served from contracts/openapi.yaml
 │   │   └── modules/
 │   │       ├── auth/                   controller, service, DTOs, password policy and hasher (argon2id),
-│   │       │                           Mongo session store, session guard, session cookie, throttling
+│   │       │                           Mongo session store, session guard, session cookie, throttling,
+│   │       │                           no-store middleware
 │   │       ├── users/                  schema, repository (E11000-safe), service, errors
 │   │       └── health/                 liveness plus MongoDB ping
 │   ├── test/                           integration tests (*.int-spec.ts) and helpers (isolated test DB, app factory)
@@ -48,7 +49,7 @@ Start with [`docs/system-design.md`](docs/system-design.md). AI usage is documen
 ├── contracts/openapi.yaml              API source of truth
 ├── docs/
 │   ├── system-design.md
-│   ├── adr/                            architecture decision records (0001-0006)
+│   ├── adr/                            architecture decision records (0001-0008)
 │   ├── superpowers/                    design spec and implementation plan
 │   ├── reviews/                        code review reports
 │   └── AI-LOG.md                       running log AI.md is assembled from
@@ -101,6 +102,7 @@ SESSION_SECRET=$(openssl rand -base64 32) docker compose -f backend/docker-compo
 Rules: email is trimmed and lowercased; name is 3-80 characters after trimming; password is 8-128 characters with
 at least one letter, one digit and one special character from the ASCII punctuation set (a space is not special).
 Every error uses one envelope: `{ statusCode, error, message, details?, requestId }`.
+Every `/api/auth/*` response, success or error, is `Cache-Control: no-store` (ADR 0008); `/api/health` is not.
 
 ### curl examples
 
@@ -155,6 +157,8 @@ parallelism 1). Run it on the deployment target and raise `ARGON2_*` while signi
   `Sec-Fetch-Site: cross-site` are rejected.
 - **Absolute 7-day sessions.** Expiry is enforced by the server on every protected request, not by cookie or TTL.
 - Signup reveals whether an email is taken (ADR 0005); signin errors are identical for unknown email and wrong password.
+- **No caching of auth answers.** `/api/auth/*` responses carry `Cache-Control: no-store`, so a browser or proxy
+  cannot replay a cached `GET /api/auth/me` after sign-out; see [ADR 0008](docs/adr/0008-auth-responses-are-no-store.md).
 - Generate `SESSION_SECRET` with `openssl rand -base64 32`. Behind a proxy set `TRUST_PROXY_HOPS`.
 
 ## CI

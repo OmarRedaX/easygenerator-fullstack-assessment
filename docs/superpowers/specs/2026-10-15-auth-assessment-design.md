@@ -145,7 +145,8 @@ the README says so. No CSRF token under the supported topology.
 **CORS.** Exactly one configured origin with `credentials: true`; no wildcard.
 
 **Hardening.** `helmet`; global rate limit (100/min/IP) and stricter on signin/signup (10/min/IP); request-ID
-middleware; pino redacts `password`, `cookie`, `set-cookie`; stack traces never reach clients.
+middleware; pino redacts `password`, `cookie`, `set-cookie`; stack traces never reach clients; every `/api/auth`
+response is `Cache-Control: no-store` (added after a browser pass, ADR 0008).
 
 ## 7. Data model and errors
 
