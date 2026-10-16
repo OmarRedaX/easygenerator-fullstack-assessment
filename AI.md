@@ -70,7 +70,10 @@ visual authority. Entries in `docs/AI-LOG.md`: "Frontend brainstorm and design s
 scaffold", "/speckit-plan: dependency audit changed three design decisions", "/speckit-tasks: 61 test-first tasks",
 "/speckit-implement: setup through session guards", "Accessibility sweep, real-browser check and a back/forward-cache
 hole", "nginx image, CI and compose", "A broad `git add` committed a file that was not mine", "/review-code on the frontend
-branch" (report: `docs/reviews/2026-10-16-frontend-review.md`).
+branch" (report: `docs/reviews/2026-10-16-frontend-review.md`), then "Clean branch without the stray postman file",
+"Constitution Principle V amended to 1.0.1", "nginx forwarding headers: safe edge default, trusted opt-in" and "T058 in
+real Chrome" (the addendum to the review lists what the browser pass found). The Apple Design Skill itself is a
+third-party skill kept local in `.claude/skills/apple-design/` and deliberately not committed.
 
 | Area | What the AI generated | How it was verified |
 |---|---|---|
@@ -90,7 +93,17 @@ What I corrected or decided differently from the AI's proposal:
   Docker build context could not see the lockfile (CI changed to the repo root), and the approved dark-mode button
   failed WCAG (white on `#0a84ff` is 3.65:1; the fill is now a separate token that stays `#0071e3`).
 - Bugs found late, not by the unit tests: the sign-in guard overrode the return path (found by an App-level test),
-  and Back after sign-out restored a cached protected page (found in the real browser).
+  and Back after sign-out restored a cached protected page (found in the real browser). The real-browser pass at the
+  end found a second, different cause of the same symptom: with the document reloaded from history, `GET /auth/me`
+  came from the HTTP cache because the API sends no `Cache-Control`. I reproduced it with the pre-fix build, fixed it
+  on the client (`cache: 'no-store'`) and left the backend recommendation to the owner. The same pass measured a
+  43px-wide footer link, and a throwaway DevTools-protocol harness gave real light-mode, reduced-motion,
+  reduced-transparency and 320/375px evidence that the Chrome tool could not.
+- Two of my own checks were wrong and I replaced them rather than trust them: a simulated "pre-fix" run that did not
+  actually disable the fix (I built the old bundle instead), and a first comparison that Chrome's per-origin cache
+  skewed (I used fresh origins).
+- The constitution wording did not match the specified, tested behaviour (48px vs 44px controls, colour transitions).
+  I made the owner choose; Principle V was amended to 1.0.1 and a test now enforces the 200ms transition bound.
 - I made one process mistake: a broad `git add` staged the owner's untracked `docs/postman/` file. The branch that
   will be pushed (`feat/frontend-auth-clean`) was rebuilt from `origin/main` without that path in any commit; the
   original branch is kept locally as a backup (see the AI-LOG entries on the clean branch).
@@ -109,12 +122,15 @@ What I corrected or decided differently from the AI's proposal:
 
 ## Verification
 
-- Frontend: 271 tests in 27 files (coverage 98.8 / 95.6 / 98.1 / 99.6 % statements / branches / functions / lines,
+- Frontend: 275 tests in 27 files (coverage 98.8 / 95.6 / 98.1 / 99.6 % statements / branches / functions / lines,
   80% line threshold enforced on `src/lib` and `src/features`), strict typecheck, type-aware ESLint with
   constitution rules (no web storage, no inline styles, layering imports), production build, axe on every page
-  state, and `frontend/scripts/verify-image.sh` against the nginx image. A real Chrome run against the real backend
-  covered sign-up, validation, wrong password, reload, sign-out, responsive widths and the production CSP. Not
-  verified by eye: light mode and reduced-motion (covered by tests only).
+  state, and `frontend/scripts/verify-image.sh` against the nginx image. Quickstart scenarios 1-14 were run in real
+  Chrome against the real backend through the nginx image (a subset again with the Vite dev proxy): validation,
+  duplicate and unknown email, wrong password, reload, sign-out and both Back-after-sign-out bugs, backend down, the
+  10/min sign-in limit through nginx, keyboard order and storage/cookie checks. Light mode, reduced motion, reduced
+  transparency, more contrast and 320/375px were checked in a separate Chrome with real media emulation; the
+  forwarding-header defence was proven through the compose stack (spoofed `X-Forwarded-For` / `-Proto`).
 - Unit tests (129+) and integration tests against a real MongoDB in an isolated `auth_test_*` database; coverage
   98.7 / 87.5 / 98.6 / 99.7 % (statements / branches / functions / lines) against an enforced 80% threshold.
 - Strict typecheck, ESLint, Redocly lint of the contract, `npm audit --audit-level=high --omit=dev`.

@@ -56,3 +56,17 @@ the review, `/speckit-analyze` (read-only) had already found the 44px footer-lin
 ## After the fixes
 Frontend: 271 tests in 27 files; lint, strict typecheck, build and `verify-image.sh` pass; CI now enforces the 80%
 line threshold.
+
+## Addendum: real-browser pass (T058) and proxy follow-up
+Found after the review, by running the quickstart in Chrome against the real stack:
+
+| # | Finding | Evidence | Fix |
+|---|---|---|---|
+| A | Back after sign-out showed the signed-in page when the browser restored it from the back/forward cache (the earlier `pageshow` fix was only unit-tested) | Reproduced with the real pre-fix bundle: welcome page and email visible while `/api/auth/me` returned 401; the fixed bundle ends on `/signin` | already fixed by the `pageshow` handler; now verified in a browser |
+| B | Back after sign-out also showed the signed-in page when the browser *reloaded* the document from history: `GET /api/auth/me` was answered from the HTTP cache (`transferSize` 0, a cached 200), because the API sends only an `ETag` and no `Cache-Control` | Reproduced with a build without the change on a clean origin; the fixed build goes to the network (401) and lands on `/signin` | `request()` sends `cache: 'no-store'` (test first) |
+| C | The footer "Sign in" link measured 43px wide at 320px (FR-019: 44px) | Measured in Chrome at 320, 375 and 1280px | `min-w-11` on `AuthLink` (test first) |
+| D | nginx appended to a client-supplied `X-Forwarded-For` and trusted a client `X-Forwarded-Proto`, so a direct client could choose its rate-limit bucket or claim HTTPS | `verify-image.sh` red run; through the stack, 12 spoofed sign-ins gave 401 x10 then 429 x2 | `FORWARDED_HEADERS_MODE=edge` (default) overwrites the headers; `trusted` is an opt-in for a load balancer you control |
+
+Open, for the owner (not done here, by the constitution's "no backend change from the frontend" rule): the backend
+should send `Cache-Control: no-store` on authentication responses (`/auth/me`, sign-in, sign-up). Finding B is
+fixed on the client, but any other client of the API would still see the cacheable `/auth/me`.
