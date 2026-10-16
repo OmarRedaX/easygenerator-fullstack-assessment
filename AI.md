@@ -65,6 +65,7 @@ From the log, in order:
 
 - **Cookie sessions over access JWT + rotating refresh.** The AI recommended JWT; I chose server-side sessions.
 - **Fail-closed CSRF** (Origin, then Referer, otherwise 403). The AI's rule allowed requests with no Origin.
+- **`Cache-Control: no-store` on `/api/auth` only (ADR 0008).** The AI recommended it on every `/api` response; I chose the narrower scope so `/health` and Swagger keep their ETags.
 - **Explicit argon2 parameters** (OWASP minimum 19456 KiB / 2 / 1), not "current recommended".
 - **Explicit special-character set** (space excluded) and a secret of at least 32 **bytes**, not "32 characters".
 - **`absoluteExpiresAt` enforced by `SessionGuard`**, not left to cookie/TTL expiry.
