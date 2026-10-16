@@ -1,7 +1,7 @@
 # Quickstart: validate the frontend auth module
 
 Proves the feature works end to end. Contracts: `contracts/api-usage.md`, `contracts/routes.md`; data shapes:
-`data-model.md`. Nothing here is implemented yet; this is the acceptance run for `/speckit-implement`.
+`data-model.md`. This is the acceptance run for the implemented feature (automated steps: section 4; manual: sections 3 and 5).
 
 ## Prerequisites
 
@@ -39,7 +39,7 @@ npm run dev:frontend                                          # http://localhost
 | 9 | Stop the backend, submit sign-in | "Something went wrong. Try again.", no reference, values kept | US2-5 |
 | 10 | Keyboard only through sign-up | Visible focus ring, logical order, Enter submits | US4-3 |
 | 11 | Toggle OS dark mode; enable reduced motion | Dark palette; animations minimal | US4-2, US4-4 |
-| 12 | DevTools at 320px and 375px | No horizontal scroll; 48px controls | US4-1 |
+| 12 | DevTools at 320px and 375px | No horizontal scroll; 48px fields and primary buttons, no control under 44px | US4-1 |
 | 13 | DevTools Application tab | No session data in local/session storage; cookie `sid` is HttpOnly | FR-017 |
 
 Rate limit (scenario 14, optional): submit sign-in 11 times within a minute -> "Too many attempts. Try again in a

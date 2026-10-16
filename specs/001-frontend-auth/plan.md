@@ -86,7 +86,7 @@ README.md                            # + frontend section (run, test, ports, COR
 
 frontend/
 ├── package.json                     # scripts: dev, build, preview, lint, typecheck, test, test:cov
-├── tsconfig.json  tsconfig.node.json
+├── tsconfig.json
 ├── vite.config.ts                   # React + Tailwind plugins, /api proxy, Vitest config
 ├── eslint.config.mjs
 ├── index.html                       # lang="en", viewport, color-scheme meta, no inline script/style
@@ -103,7 +103,7 @@ frontend/
     │   ├── api/{client.ts,errors.ts,auth.ts,types.ts}   # no React imports
     │   └── validation/{password-policy.ts,schemas.ts}   # no React imports
     ├── features/
-    │   ├── auth/{SignUpPage,SignInPage,RequireAuth,GuestOnly,useSession,useAuthActions,formErrors}.ts(x)
+    │   ├── auth/{SignUpPage,SignInPage,AuthLayout,RequireAuth,GuestOnly,session,useLogout,formErrors,safeReturnPath}.ts(x)
     │   └── home/WelcomePage.tsx
     ├── components/
     │   ├── ui/{Button,Field,PasswordField,PasswordRules,Alert,Spinner,Logo,Splash}.tsx   # no auth/api imports

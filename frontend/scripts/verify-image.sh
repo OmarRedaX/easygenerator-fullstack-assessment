@@ -54,7 +54,7 @@ docker network create "$NET" >/dev/null
 docker run -d --name "$UPSTREAM" --network "$NET" --network-alias upstream node:22-alpine node -e "
 require('http').createServer((req, res) => {
   res.setHeader('content-type', 'application/json');
-  res.end(JSON.stringify({ path: req.url, method: req.method, origin: req.headers.origin || null, host: req.headers.host || null }));
+  res.end(JSON.stringify({ path: req.url, method: req.method, origin: req.headers.origin || null, host: req.headers.host || null, xfp: req.headers['x-forwarded-proto'] || null, xff: req.headers['x-forwarded-for'] || null }));
 }).listen(3000);
 " >/dev/null
 docker run -d --name "$WEB" --network "$NET" -e BACKEND_URL=http://upstream:3000 -p "127.0.0.1:$PORT:8080" "$IMAGE" >/dev/null
@@ -104,6 +104,15 @@ BODY="$(curl -s -X POST -H 'Origin: http://localhost:8080' -H 'Content-Type: app
 echo "$BODY" | grep -q '"path":"/api/auth/signin"' || fail "the /api prefix was not preserved (upstream saw: $BODY)"
 echo "$BODY" | grep -q '"origin":"http://localhost:8080"' || fail "the Origin header was not forwarded unchanged (upstream saw: $BODY)"
 ok "POST /api/auth/signin reaches the upstream with its prefix and Origin intact"
+# A TLS-terminating load balancer in front of nginx sets X-Forwarded-Proto: https; nginx must not overwrite it with
+# its own plain-HTTP scheme, or the backend sees an insecure request and refuses to send the Secure session cookie.
+BODY="$(curl -s -X POST -H 'Content-Type: application/json' -d '{}' "$BASE/api/auth/signin")"
+echo "$BODY" | grep -q '"xfp":"http"' || fail "without a forwarded proto nginx must report its own scheme (upstream saw: $BODY)"
+BODY="$(curl -s -X POST -H 'X-Forwarded-Proto: https' -H 'Content-Type: application/json' -d '{}' "$BASE/api/auth/signin")"
+echo "$BODY" | grep -q '"xfp":"https"' || fail "X-Forwarded-Proto: https from a load balancer must reach the backend (upstream saw: $BODY)"
+BODY="$(curl -s -X POST -H 'X-Forwarded-Proto: gopher' -H 'Content-Type: application/json' -d '{}' "$BASE/api/auth/signin")"
+echo "$BODY" | grep -q '"xfp":"http"' || fail "an unexpected X-Forwarded-Proto value must be replaced by nginx's scheme (upstream saw: $BODY)"
+ok "X-Forwarded-Proto from a TLS-terminating proxy is preserved; junk values are not"
 [ -z "$(header content-security-policy "$BASE/api/health")" ] || fail "the SPA CSP must not be added to /api responses"
 ok "/api responses keep the backend's own headers"
 [ "$(curl -s "$BASE/api/health" | grep -c '"path":"/api/health"')" = "1" ] || fail "GET /api/health did not reach the upstream intact"

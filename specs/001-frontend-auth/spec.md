@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-16
 
-**Status**: Draft
+**Status**: Implemented (see tasks.md and docs/reviews/2026-10-16-frontend-review.md)
 
 **Input**: User description: "Frontend auth module for the Easygenerator assessment: React + TypeScript sign-up, sign-in and application pages against the existing cookie-session backend, with an Apple-inspired interface. Source of truth for scope, rules and behaviour: docs/superpowers/specs/2026-10-16-frontend-design.md (sections 1-8) and contracts/openapi.yaml."
 

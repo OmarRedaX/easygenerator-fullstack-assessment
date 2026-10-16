@@ -69,7 +69,8 @@ brainstorm with an interactive browser mockup, then GitHub's spec-kit (`/speckit
 visual authority. Entries in `docs/AI-LOG.md`: "Frontend brainstorm and design spec", "Git state check and spec-kit
 scaffold", "/speckit-plan: dependency audit changed three design decisions", "/speckit-tasks: 61 test-first tasks",
 "/speckit-implement: setup through session guards", "Accessibility sweep, real-browser check and a back/forward-cache
-hole", "nginx image, CI and compose", "A broad `git add` committed a file that was not mine".
+hole", "nginx image, CI and compose", "A broad `git add` committed a file that was not mine", "/review-code on the frontend
+branch" (report: `docs/reviews/2026-10-16-frontend-review.md`).
 
 | Area | What the AI generated | How it was verified |
 |---|---|---|
@@ -107,7 +108,7 @@ What I corrected or decided differently from the AI's proposal:
 
 ## Verification
 
-- Frontend: 259 tests in 25 files (coverage 98.7 / 94.8 / 98.0 / 99.5 % statements / branches / functions / lines,
+- Frontend: 271 tests in 27 files (coverage 98.8 / 95.6 / 98.1 / 99.6 % statements / branches / functions / lines,
   80% line threshold enforced on `src/lib` and `src/features`), strict typecheck, type-aware ESLint with
   constitution rules (no web storage, no inline styles, layering imports), production build, axe on every page
   state, and `frontend/scripts/verify-image.sh` against the nginx image. A real Chrome run against the real backend

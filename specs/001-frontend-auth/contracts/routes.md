@@ -36,5 +36,5 @@ submitting: inputs `disabled`, button `aria-busy="true"` with spinner and the la
 
 ### WelcomePage
 Translucent top bar (brand + "Sign out" ghost button), then a centred block: email pill, `h1` exactly
-`Welcome to the application.`, one sentence of supporting copy. "Sign out" shows "Signing out..." with `aria-busy`
+`Welcome to the application.`, short supporting copy. "Sign out" shows "Signing out..." with `aria-busy`
 while pending; on a non-401 failure a page-level `Alert` (with reference when present) appears above the headline.

@@ -65,7 +65,7 @@ jobs:
       - if: steps.has.outputs.present == 'true'
         run: npm run typecheck -w frontend
       - if: steps.has.outputs.present == 'true'
-        run: npm test -w frontend --if-present
+        run: npm run test:cov -w frontend
       - if: steps.has.outputs.present == 'true'
         run: npm run build -w frontend
 

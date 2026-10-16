@@ -162,7 +162,10 @@ SESSION_SECRET=$(openssl rand -base64 32) CORS_ORIGIN=http://localhost:8080 \
   docker compose -f backend/docker-compose.yml --profile app up -d --build    # then open http://localhost:8080
 ```
 
-Set `MONGO_PORT`, `API_PORT` or `WEB_PORT` if a default port is taken. The API can take a while to boot; an nginx
+Set `MONGO_PORT`, `API_PORT` or `WEB_PORT` if a default port is taken. In this profile the API is published on loopback only and
+`TRUST_PROXY_HOPS` is set to `1` (the web proxy; override with `API_TRUST_PROXY_HOPS`), so rate limits are per client; add one hop for each extra proxy or
+load balancer in front of `web`. A TLS-terminating load balancer in front of `web` must send `X-Forwarded-Proto: https`
+(nginx passes it on, which keeps the `Secure` session cookie working). The API can take a while to boot; an nginx
 `502` right after start means it is still starting.
 
 ## API

@@ -15,9 +15,16 @@ services:
       dockerfile: backend/Dockerfile
     depends_on:
       mongo: { condition: service_healthy }
-    ports: ["${API_PORT:-3000}:3000"]
+    # Loopback only: with TRUST_PROXY_HOPS=1 the API trusts X-Forwarded-For, which anyone who can reach this port
+    # directly could forge to dodge the rate limit. The browser path is the web service below.
+    ports: ["127.0.0.1:${API_PORT:-3000}:3000"]
     environment:
       NODE_ENV: development # production sets Secure cookies, which need HTTPS
+      # One proxy (the web service) sits in front: without this every visitor shares the proxy address and therefore
+      # one rate-limit bucket. Count every proxy in front of the API (add one for a load balancer in front of web).
+      # Named API_TRUST_PROXY_HOPS because compose also reads backend/.env, whose TRUST_PROXY_HOPS=0 is for running
+      # the API without a proxy and would silently override this default.
+      TRUST_PROXY_HOPS: ${API_TRUST_PROXY_HOPS:-1}
       MONGODB_URI: mongodb://mongo:27017/easygenerator
       SESSION_SECRET: "${SESSION_SECRET:?generate one with: openssl rand -base64 32}"
       # Must equal the origin the BROWSER uses: the CSRF guard compares it with the request's Origin even when the
