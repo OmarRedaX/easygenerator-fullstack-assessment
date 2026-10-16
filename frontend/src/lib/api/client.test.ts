@@ -43,6 +43,15 @@ describe('request: transport', () => {
     expect(init?.headers).not.toHaveProperty('Content-Type');
   });
 
+  // The API sends no Cache-Control, only an ETag. On Back/Forward the browser may then answer GET /auth/me from its
+  // HTTP cache without asking the server, which showed the signed-in page after sign-out (seen in Chrome).
+  it.each(['GET', 'POST'] as const)('opts every %s out of the browser HTTP cache', async (method) => {
+    fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
+    await request(method, '/auth/me');
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    expect(init).toMatchObject({ cache: 'no-store' });
+  });
+
   it('sends a JSON body with a content type', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ user: {} }, 201));
     await request('POST', '/auth/signup', { body: { email: 'a@b.co' } });

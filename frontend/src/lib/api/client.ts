@@ -62,7 +62,9 @@ export async function request<T = undefined>(
   { body, notifyUnauthorized = true }: RequestOptions = {},
 ): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' };
-  const init: RequestInit = { method, credentials: 'same-origin', headers };
+  // no-store: answers about who is signed in must never come from the browser's HTTP cache (the API sends no
+  // Cache-Control, so a Back navigation could otherwise replay an old signed-in /auth/me).
+  const init: RequestInit = { method, credentials: 'same-origin', cache: 'no-store', headers };
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json';
     init.body = JSON.stringify(body);
