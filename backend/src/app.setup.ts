@@ -10,8 +10,11 @@ import { HttpExceptionFilter } from './common/http-exception.filter';
 import { requestIdMiddleware } from './common/request-id.middleware';
 import type { Env } from './config/env.schema';
 import { setupSwagger } from './docs/swagger';
+import { noStoreMiddleware } from './modules/auth/no-store.middleware';
 import { sessionCookieOptions } from './modules/auth/session-cookie';
 import { SessionStoreService } from './modules/auth/session-store';
+
+const API_PREFIX = 'api';
 
 const toDetails = (errors: ValidationError[]) =>
   errors.map((e) => ({ field: e.property, messages: Object.values(e.constraints ?? {}) }));
@@ -33,6 +36,9 @@ export function configureApp(app: NestExpressApplication): void {
 
   app.use(requestIdMiddleware);
   app.use(helmet());
+  // Authentication answers say who is signed in, so nothing may cache them (ADR 0008). Mounted by path, before the
+  // body parser, so 400/413 answers for a bad body and errors from guards and filters carry it too.
+  app.use(`/${API_PREFIX}/auth`, noStoreMiddleware);
   const allowedOrigin = config.get('CORS_ORIGIN', { infer: true });
   app.enableCors({
     // Exact match only: a foreign Origin gets no CORS headers at all (a static string would echo ours to everyone).
@@ -65,7 +71,7 @@ export function configureApp(app: NestExpressApplication): void {
     }),
   );
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix(API_PREFIX);
   app.useLogger(app.get(Logger));
   app.enableShutdownHooks();
   setupSwagger(app);
