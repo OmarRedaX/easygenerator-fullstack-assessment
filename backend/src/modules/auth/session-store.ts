@@ -19,6 +19,9 @@ export class SessionStoreService implements OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
+    // connect-mongo builds the TTL index in the background after connecting; closing the client mid-build rejects
+    // that promise (MongoClientClosedError), so let it settle first. A failure there is not ours to surface on shutdown.
+    await this.store.collectionP.catch(() => undefined);
     await this.store.close();
   }
 }
