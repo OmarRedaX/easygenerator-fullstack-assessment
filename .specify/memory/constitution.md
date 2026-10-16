@@ -36,10 +36,14 @@ after success or 401; any other failure shows the error and rechecks the session
 
 ### V. Accessible, Apple-Quality UI
 The approved mockup and the Apple Design Skill are the visual standard: system font stack, size-specific
-tracking, 48px controls, 12px/24px radii, light and dark themes from the OS. Every control MUST have a real
-label, `autocomplete`, visible focus, `aria-invalid` and `aria-describedby` for errors, and `role="alert"` for
-server errors; contrast MUST be at least 4.5:1 in both themes. Motion MUST be CSS-only, limited to `transform`
-and `opacity`, give feedback on pointer-down, and honour `prefers-reduced-motion`,
+tracking, 12px/24px radii, light and dark themes from the OS. Primary controls (inputs and the primary button)
+are 48px tall; secondary controls (ghost buttons, the show/hide toggle, footer links) are at least 44px, the
+touch-target minimum of FR-019. Every control MUST have a real label, `autocomplete`, visible focus,
+`aria-invalid` and `aria-describedby` for errors, and `role="alert"` for server errors; contrast MUST be at
+least 4.5:1 in both themes. Motion MUST be CSS-only and give feedback on pointer-down. Keyframe and
+position/scale motion (entrances, press feedback, the rules checklist) is limited to `transform` and `opacity`;
+subtle colour, border-colour and box-shadow transitions of at most 200ms are allowed for hover, focus and state
+feedback. All motion MUST honour `prefers-reduced-motion` (transitions collapse, entrances become opacity-only),
 `prefers-reduced-transparency` and `prefers-contrast`. Loading, empty and error states MUST exist for every
 async view.
 
@@ -77,4 +81,13 @@ materially expanding one is MINOR, and wording fixes are PATCH. Every plan (`/sp
 Constitution Check against Principles I-VII, and every PR description MUST state compliance or list justified
 deviations. Runtime guidance lives in the root `CLAUDE.md` and the approved design document.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-16 | **Last Amended**: 2026-10-16
+**Amendments**
+- 1.0.1 (2026-10-16, PATCH): Principle V now matches the specified and built behaviour instead of a looser
+  sentence. Secondary controls are 44px (FR-019 already required it), and state-feedback colour and shadow
+  transitions up to 200ms are allowed next to transform/opacity motion. Reduced-motion, reduced-transparency and
+  contrast behaviour, and every other principle, are unchanged. Owner decision: PATCH, because it is a wording
+  alignment with behaviour the spec (FR-019) and the tested code already had, not a new principle (it relaxes
+  one MUST and adds a 200ms bound the code now meets). `src/styles/tokens.test.ts` ("motion budget") enforces
+  that bound.
+
+**Version**: 1.0.1 | **Ratified**: 2026-10-16 | **Last Amended**: 2026-10-16

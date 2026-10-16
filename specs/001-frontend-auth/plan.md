@@ -37,7 +37,7 @@ non-root nginx image, and README instructions. Research (`research.md`) settled 
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-checked after Phase 1 design.* Constitution v1.0.0.
+*GATE: Must pass before Phase 0 research. Re-checked after Phase 1 design.* Constitution v1.0.1 (v1.0.0 at plan time; Principle V was clarified, see its Amendments).
 
 | Principle | Gate | Status |
 |---|---|---|

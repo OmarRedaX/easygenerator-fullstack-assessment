@@ -7,7 +7,7 @@ description: "Task list for the frontend auth module"
 
 **Input**: Design documents from `/specs/001-frontend-auth/` (plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md)
 
-**Prerequisites**: plan.md, spec.md (done). Constitution `.specify/memory/constitution.md` v1.0.0 applies to every task.
+**Prerequisites**: plan.md, spec.md (done). Constitution `.specify/memory/constitution.md` v1.0.1 applies to every task.
 
 **Tests**: REQUIRED (Constitution Principle III, non-negotiable). Every implementation task is preceded by its test
 task. For each pair: write the test, **run it and watch it fail for the right reason**, implement, **run it and
@@ -151,7 +151,7 @@ can discard a new session.
 - [X] T045 [P] [US4] (red) `frontend/src/keyboard.test.tsx`: with user-event `tab()`, the sign-up order is Name -> Email -> Password -> Show -> Create account -> Sign in link; sign-in order is Email -> Password -> Show -> Sign in -> Create-account link; Enter in any field submits once; Space/Enter toggle Show; welcome page `Sign out` is reachable and activates with Enter. Must fail only if the order differs; fix the markup, not the test.
 - [X] T046 [US4] (green) Close any gaps found by T044/T045 in `frontend/src/components/ui/*`, the pages and `frontend/src/styles/index.css` (labels, `aria-*`, DOM order, visible focus, 48px/44px targets, 320px layout with no overflow: `min-w-0`, `break-words`, card `max-w-[380px] w-full`, card dissolves under 480px; `lang`, `color-scheme`).
 - [X] T047 [US4] Visual verification against the mockup (use the Claude in Chrome tools; save nothing in the repo): run backend + `npm run dev:frontend`, open `/signup`, `/signin`, `/` at 320px, 375px and 1280px in light and dark (emulate `prefers-color-scheme`), with `prefers-reduced-motion` and `prefers-reduced-transparency` emulated, and compare with `.superpowers/brainstorm/*/content/visual-direction.html`. Check: tracking and sizes, 48px controls, focus ring, rules checklist animation, translucent bar vs solid bar, no horizontal scroll, dark button text legible. Fix differences in `index.css`/components with a failing token or component test first where the difference is testable. Record screenshots' conclusions in `docs/AI-LOG.md` (not images).
-- [X] T048 [US4] Motion pass (Apple Design Skill rules that apply here): press feedback on pointer-down (`:active`), no input blocked during any transition, only `transform`/`opacity` animated, rise-in <= 500ms, `prefers-reduced-motion` verified in the browser (rise-in becomes opacity only). Add a test in `frontend/src/styles/tokens.test.ts` for any rule not yet asserted. Commit `feat(frontend): polish accessibility and motion`.
+- [X] T048 [US4] Motion pass (Apple Design Skill rules that apply here): press feedback on pointer-down (`:active`), no input blocked during any transition, keyframe/position motion only `transform`/`opacity` (colour and shadow state transitions at most 200ms, constitution 1.0.1), rise-in <= 500ms, `prefers-reduced-motion` verified in the browser (rise-in becomes opacity only). Add a test in `frontend/src/styles/tokens.test.ts` for any rule not yet asserted. Commit `feat(frontend): polish accessibility and motion`.
 
 **Checkpoint**: quickstart scenarios 10-13 pass; axe and keyboard tests green.
 

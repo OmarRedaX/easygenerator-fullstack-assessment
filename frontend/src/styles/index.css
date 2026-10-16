@@ -107,8 +107,8 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     transition:
-      background-color 400ms var(--ease-soft),
-      color 400ms var(--ease-soft);
+      background-color 200ms var(--ease-soft),
+      color 200ms var(--ease-soft);
   }
   ::placeholder {
     color: var(--color-muted);

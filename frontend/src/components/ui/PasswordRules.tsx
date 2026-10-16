@@ -25,7 +25,7 @@ export function PasswordRules({ rules, id }: PasswordRulesProps) {
           >
             <span
               aria-hidden="true"
-              className={`grid size-4 flex-none place-items-center rounded-full border-[1.5px] transition-[background-color,border-color,transform] duration-250 ease-soft ${
+              className={`grid size-4 flex-none place-items-center rounded-full border-[1.5px] transition-[background-color,border-color,transform] duration-200 ease-soft ${
                 met ? 'scale-105 border-ok bg-ok' : 'border-line bg-transparent'
               }`}
             >

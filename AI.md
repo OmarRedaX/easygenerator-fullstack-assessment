@@ -91,8 +91,9 @@ What I corrected or decided differently from the AI's proposal:
   failed WCAG (white on `#0a84ff` is 3.65:1; the fill is now a separate token that stays `#0071e3`).
 - Bugs found late, not by the unit tests: the sign-in guard overrode the return path (found by an App-level test),
   and Back after sign-out restored a cached protected page (found in the real browser).
-- I made one process mistake: a broad `git add` staged my untracked `docs/postman/` file twice; it is untracked
-  again and the net diff contains no copy (see the last log entry).
+- I made one process mistake: a broad `git add` staged the owner's untracked `docs/postman/` file. The branch that
+  will be pushed (`feat/frontend-auth-clean`) was rebuilt from `origin/main` without that path in any commit; the
+  original branch is kept locally as a backup (see the AI-LOG entries on the clean branch).
 
 ## Decisions that differ from AI suggestions
 

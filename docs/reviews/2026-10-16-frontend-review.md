@@ -31,10 +31,12 @@ the review, `/speckit-analyze` (read-only) had already found the 44px footer-lin
 - **Floating image tags and action tags** (`node:22-alpine`, `nginxinc/nginx-unprivileged:1.30-alpine`,
   `actions/*@v4`) with no digests or image scan. Same convention as the backend image and the original CI spec;
   pinning digests needs a bump process (Dependabot) that does not exist yet. Recorded as future work.
-- **Constitution wording vs code (owner decision needed):** principle V says motion is "limited to `transform` and
-  `opacity`" and "48px controls". The code also transitions colour and box-shadow for hover/focus/state feedback
-  (150-200 ms) and the secondary controls (Sign out, Show/Hide, footer links) are 44px, as FR-019 requires. The
-  constitution was not edited by the implementer; either the code is tightened or the principle is amended (PATCH).
+- **Constitution wording vs code (resolved by the owner, constitution 1.0.1):** principle V said motion is "limited
+  to `transform` and `opacity`" and "48px controls". The code also transitions colour and box-shadow for
+  hover/focus/state feedback and the secondary controls (Sign out, Show/Hide, footer links) are 44px, as FR-019
+  requires. The owner chose to amend the principle (PATCH): primary controls 48px, secondary 44px, state-feedback
+  colour/shadow transitions up to 200ms, keyframe motion stays `transform`/`opacity`. Two transitions above 200ms
+  (`body` theme fade 400ms, checklist dot 250ms) were shortened to 200ms and a "motion budget" test enforces it.
 - Cosmetic, not exploitable: `GET /api` redirects to `/api/`; `server_name _` accepts any `Host`.
 
 ## Verified / refuted
@@ -47,8 +49,9 @@ the review, `/speckit-analyze` (read-only) had already found the 44px footer-lin
 - Client code: no `dangerouslySetInnerHTML`, web storage or `console.*`; `safeReturnPath` rejects `//` and `/\`, and
   `from` only comes from the app's own router state. The session cancel/set logic and the double-submit guard: no
   race found.
-- Process: no `*.pdf`, `.env`, or backend source change in the branch diff. `docs/postman/` was committed by mistake
-  in `d4a6032` and untracked again; the net diff against `origin/main` has no copy.
+- Process: no `*.pdf`, `.env`, or backend source change in the branch diff. `docs/postman/` was staged by a broad
+  `git add` on the original branch; the branch under review (`feat/frontend-auth-clean`) was rebuilt from
+  `origin/main` and no commit in it touches that path.
 
 ## After the fixes
 Frontend: 271 tests in 27 files; lint, strict typecheck, build and `verify-image.sh` pass; CI now enforces the 80%

@@ -38,8 +38,8 @@ npm run dev:frontend                                          # http://localhost
 | 8 | Open `/signin` while signed in | Redirect to `/` | US3-3 |
 | 9 | Stop the backend, submit sign-in | "Something went wrong. Try again.", no reference, values kept | US2-5 |
 | 10 | Keyboard only through sign-up | Visible focus ring, logical order, Enter submits | US4-3 |
-| 11 | Toggle OS dark mode; enable reduced motion | Dark palette; animations minimal | US4-2, US4-4 |
-| 12 | DevTools at 320px and 375px | No horizontal scroll; 48px fields and primary buttons, no control under 44px | US4-1 |
+| 11 | Toggle OS dark mode; enable reduced motion | Dark palette; animations minimal (entrance fades with opacity only, no sliding; transitions collapse) | US4-2, US4-4 |
+| 12 | DevTools at 320px and 375px | No horizontal scroll; 48px fields and primary button, secondary controls (Show/Hide, Sign out, footer links) at least 44px, no control under 44px | US4-1 |
 | 13 | DevTools Application tab | No session data in local/session storage; cookie `sid` is HttpOnly | FR-017 |
 
 Rate limit (scenario 14, optional): submit sign-in 11 times within a minute -> "Too many attempts. Try again in a

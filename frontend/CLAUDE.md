@@ -1,6 +1,6 @@
 # frontend/CLAUDE.md — SPA rules (binding)
 
-The frontend constitution is `.specify/memory/constitution.md` (v1.0.0); it wins over this file. The feature is
+The frontend constitution is `.specify/memory/constitution.md` (v1.0.1); it wins over this file. The feature is
 specified in `specs/001-frontend-auth/` (spec, plan, data model, contracts, tasks). API truth is
 `contracts/openapi.yaml`.
 

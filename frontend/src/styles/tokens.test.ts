@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { tokens, type ThemeName } from './tokens';
@@ -99,5 +99,49 @@ describe('index.css', () => {
 
   it('never uses inline-style-only features that the CSP would block', () => {
     expect(css).not.toMatch(/@import\s+url\(\s*['"]?https?:/);
+  });
+});
+
+// Constitution Principle V (1.0.1): colour, border and shadow transitions are allowed for hover, focus and state
+// feedback up to 200ms; anything longer may only move `transform` and `opacity`.
+describe('motion budget', () => {
+  const MAX_STATE_TRANSITION_MS = 200;
+  const MOTION_PROPERTIES = new Set(['transform', 'opacity']);
+
+  function sourceFiles(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = resolve(dir, entry.name);
+      if (entry.isDirectory()) return sourceFiles(path);
+      return entry.name.endsWith('.tsx') && !entry.name.endsWith('.test.tsx') ? [path] : [];
+    });
+  }
+
+  function tooSlowForState(properties: string[], milliseconds: number): boolean {
+    return milliseconds > MAX_STATE_TRANSITION_MS && properties.some((p) => !MOTION_PROPERTIES.has(p));
+  }
+
+  it('CSS transitions on colours stay within the state-feedback budget', () => {
+    const outsideReducedMotion = css.replace(block(css, '@media (prefers-reduced-motion: reduce)'), '');
+    const offenders: string[] = [];
+    for (const declaration of outsideReducedMotion.matchAll(/transition:\s*([^;]+);/g)) {
+      for (const part of (declaration[1] ?? '').split(',')) {
+        const [property, duration] = part.trim().split(/\s+/);
+        const milliseconds = Number.parseInt(duration ?? '', 10);
+        if (property && tooSlowForState([property], milliseconds)) offenders.push(part.trim());
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('component transition utilities that touch colour, border or shadow are at most 200ms', () => {
+    const offenders: string[] = [];
+    for (const file of sourceFiles(resolve(process.cwd(), 'src'))) {
+      const source = readFileSync(file, 'utf8');
+      for (const match of source.matchAll(/transition-(?:\[([^\]]+)\]|(colors|shadow|all))[^'"`]*?duration-(\d+)/g)) {
+        const properties = match[1] ? match[1].split(',') : [match[2] ?? ''];
+        if (tooSlowForState(properties, Number.parseInt(match[3] ?? '0', 10))) offenders.push(`${file}: ${match[0]}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });
