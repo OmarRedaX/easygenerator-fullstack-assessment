@@ -19,6 +19,12 @@ export class SessionStoreService implements OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
+    // connect-mongo connects and builds its TTL index in the background (`collectionP`) and nothing awaits that
+    // until a request needs the store. Closing the client while it is still running rejects it with
+    // MongoClientClosedError, which nobody handles: an app that is stopped right after it starts (tests, a crash
+    // loop, a failed init) then fails randomly. Let startup settle first; a startup failure is not this hook's to
+    // report, the client is closed either way.
+    await this.store.collectionP.catch(() => undefined);
     await this.store.close();
   }
 }
