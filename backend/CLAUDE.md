@@ -59,6 +59,11 @@ the README says so. No CSRF token under the supported topology.
 
 **CORS.** Exactly one configured origin with `credentials: true`; no wildcard.
 
+**Caching.** Every response under `/api/auth` (success and error) carries `Cache-Control: no-store`, set by
+`noStoreMiddleware` mounted on that path in `configureApp` before the body parser and guards (ADR 0008). A new
+endpoint that returns user-specific data outside `/api/auth` must set its own `Cache-Control`. The contract declares
+the header and a test checks behaviour and contract.
+
 **Hardening.** `helmet`; global rate limit (100/min/IP) and stricter on signin/signup (10/min/IP); request-ID
 middleware; pino redacts `password`, `cookie`, `set-cookie`; stack traces never reach clients.
 

@@ -13,10 +13,11 @@ Modules (`backend/src`):
 - `config` — Zod-validated environment; the app refuses to start on invalid values.
 - `common` — clock, request ID, single error envelope filter, CSRF guard, logging redaction.
 - `modules/users` — schema, repository (only code using Mongoose models), service.
-- `modules/auth` — controller, service, DTOs, password policy and hasher, session store and `SessionGuard`.
+- `modules/auth` — controller, service, DTOs, password policy and hasher, session store, `SessionGuard` and the
+  no-store middleware.
 - `modules/health` — liveness plus a MongoDB ping.
 
-Cross-cutting pipeline (`configureApp`), in execution order: request ID → helmet → CORS (one origin) → session →
+Cross-cutting pipeline (`configureApp`), in execution order: request ID → helmet → `Cache-Control: no-store` on `/api/auth` → CORS (one origin) → session →
 16 kb JSON parser (the only body parser; form bodies are not parsed) → global guards (Throttler, CSRF) → validation
 pipe → controller; the exception filter wraps everything and the `/api` prefix is applied to routes. A malformed or
 oversized body therefore gets 400/413 before the CSRF check or rate limit runs. Swagger UI serves the contract at
@@ -68,5 +69,7 @@ navigation and remember a safe return path (single leading `/`, never `//`, neve
 - Cookie sessions over JWT: immediate revocation at the cost of one lookup per protected request (ADR 0002).
 - Same-site-only hosting keeps CSRF defence to a fail-closed Origin/Referer check, no token (ADR 0003).
 - Signup discloses duplicate emails; limited by the strict auth rate limit (ADR 0005).
+- Authentication responses are `no-store`, set for `/api/auth` only so `/health` and Swagger keep their ETags
+  (ADR 0008).
 - argon2id at the OWASP floor, tunable, with a benchmark script; timing is narrowed, not equalised (ADR 0004).
 - Tests run against a real MongoDB in an isolated `auth_test_*` database, not an in-memory server.
