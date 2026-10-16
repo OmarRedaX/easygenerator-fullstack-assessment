@@ -185,7 +185,7 @@ can discard a new session.
 - [ ] T058 Run the full `quickstart.md` manual scenarios 1-13 (+14 optional) in a real browser against the real backend, in both the dev setup and the nginx setup (section 5). Tick them off in your report; any failure becomes a new red test first.
 - [X] T059 Analyse consistency: run the `speckit-analyze` skill on `specs/001-frontend-auth` (read-only) and resolve any CRITICAL finding in the spec/plan/tasks or the code; note remaining LOW findings in the report.
 - [X] T060 Run `/review-code` on the branch (correctness, security and contract-drift reviewers in parallel, then adversarial verification of each finding). Fix confirmed findings test-first, record accepted-not-fixed items in `docs/reviews/2026-10-16-frontend-review.md` (same format as the backend review).
-- [ ] T061 Final git hygiene: `git status` shows no stray files (no `.superpowers/`, `*.pdf`, `.env`, coverage output); `git log --oneline main..HEAD` reads as conventional commits; **stop here**. Report to the owner with the test evidence for the PR description. Pushing the branch and opening the PR to `main` happen only after the owner confirms.
+- [X] T061 Final git hygiene: `git status` shows no stray files (no `.superpowers/`, `*.pdf`, `.env`, coverage output); `git log --oneline main..HEAD` reads as conventional commits; **stop here**. Report to the owner with the test evidence for the PR description. Pushing the branch and opening the PR to `main` happen only after the owner confirms.
 
 ---
 
