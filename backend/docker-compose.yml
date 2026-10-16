@@ -42,3 +42,7 @@ services:
     ports: ["${WEB_PORT:-8080}:8080"]
     environment:
       BACKEND_URL: http://api:3000
+      # edge (default): nginx is the first proxy and overwrites X-Forwarded-For/-Proto/-Host from the socket, so a
+      # client cannot pick its rate-limit bucket or claim HTTPS. Put a TLS-terminating load balancer you control in
+      # front and use trusted instead, together with API_TRUST_PROXY_HOPS=2 (load balancer + nginx) on the api.
+      FORWARDED_HEADERS_MODE: ${WEB_FORWARDED_HEADERS_MODE:-edge}

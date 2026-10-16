@@ -163,10 +163,14 @@ SESSION_SECRET=$(openssl rand -base64 32) CORS_ORIGIN=http://localhost:8080 \
 ```
 
 Set `MONGO_PORT`, `API_PORT` or `WEB_PORT` if a default port is taken. In this profile the API is published on loopback only and
-`TRUST_PROXY_HOPS` is set to `1` (the web proxy; override with `API_TRUST_PROXY_HOPS`), so rate limits are per client; add one hop for each extra proxy or
-load balancer in front of `web`. A TLS-terminating load balancer in front of `web` must send `X-Forwarded-Proto: https`
-(nginx passes it on, which keeps the `Secure` session cookie working). The API can take a while to boot; an nginx
-`502` right after start means it is still starting.
+`TRUST_PROXY_HOPS` is set to `1` (the web proxy; override with `API_TRUST_PROXY_HOPS`), so rate limits are per client.
+By default nginx runs in `edge` mode (`FORWARDED_HEADERS_MODE=edge`): it is the first proxy, so it overwrites
+`X-Forwarded-For`, `X-Forwarded-Proto` and `X-Forwarded-Host` from the connection and a client cannot pick its
+rate-limit bucket or claim HTTPS. Behind a TLS-terminating load balancer that you control, start `web` with
+`WEB_FORWARDED_HEADERS_MODE=trusted` and the API with `API_TRUST_PROXY_HOPS=2` (load balancer plus nginx): nginx then
+appends to `X-Forwarded-For` and honours `X-Forwarded-Proto` only when it is exactly `http` or `https`, which keeps the
+`Secure` session cookie working. Use `trusted` only if clients cannot reach `web` or the API directly. The API can take a
+while to boot; an nginx `502` right after start means it is still starting.
 
 ## API
 

@@ -1,8 +1,10 @@
-# Rendered by the image entrypoint: only ${BACKEND_URL} is substituted; nginx variables ($host, $uri, ...) are kept.
+# Rendered by the image entrypoint: only ${BACKEND_URL} and ${FORWARDED_HEADERS_MODE} are substituted; nginx
+# variables ($host, $uri, ...) are kept.
 
-# This nginx speaks plain HTTP. When a load balancer terminates TLS in front of it, the original scheme arrives in
-# X-Forwarded-Proto and must reach the backend unchanged (otherwise express-session sees an insecure request and
-# never sends the Secure cookie). Only "http" and "https" are trusted; anything else falls back to our own scheme.
+# Used by forwarded-trusted.conf only. This nginx speaks plain HTTP; behind a TLS-terminating load balancer the
+# original scheme arrives in X-Forwarded-Proto and must reach the backend (otherwise express-session sees an
+# insecure request and never sends the Secure cookie). Only "http" and "https" are honoured; anything else falls
+# back to our own scheme.
 map $http_x_forwarded_proto $forwarded_proto {
     default $scheme;
     "http"  "http";
@@ -34,8 +36,9 @@ server {
         proxy_pass ${BACKEND_URL};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $forwarded_proto;
+        # Client identity and scheme headers: "edge" (default) overwrites them from the socket, "trusted" is for a
+        # load balancer in front. An unknown mode makes nginx refuse to start (the include file does not exist).
+        include /etc/nginx/forwarded-${FORWARDED_HEADERS_MODE}.conf;
     }
 
     # Hashed filenames: safe to cache for a year. A missing file is a 404, never the SPA shell.

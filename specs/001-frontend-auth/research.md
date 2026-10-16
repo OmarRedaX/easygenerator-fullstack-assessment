@@ -53,7 +53,9 @@ production) - rejected in the design (decision A).
 - **Upstream.** nginx proxies `/api/` to `${BACKEND_URL}` (default `http://api:3000`) through the image's built-in
   `envsubst` of `/etc/nginx/templates/*.template`. `proxy_pass http://...;` has **no URI part**, so the `/api`
   prefix is preserved. `proxy_set_header Host $host` and the default pass-through of `Origin` are kept;
-  `X-Forwarded-For/Proto` are added (the backend has `TRUST_PROXY_HOPS`).
+  forwarding headers follow `FORWARDED_HEADERS_MODE`: `edge` (default) overwrites `X-Forwarded-For/-Proto/-Host` from
+  the socket, `trusted` (behind a load balancer you control) appends to `X-Forwarded-For` and honours only
+  `http`/`https` in `X-Forwarded-Proto`; the backend's `TRUST_PROXY_HOPS` must match (1 for edge, 2 for trusted).
 - **Compose.** Add a `web` service (profile `app`) to `backend/docker-compose.yml` publishing `8080`. With it, the
   `api` service's `CORS_ORIGIN` must be `http://localhost:8080`; documented in the README, not defaulted.
 - **Risk found:** adding `frontend` to the root `workspaces` changes what `npm ci` expects inside the **backend**

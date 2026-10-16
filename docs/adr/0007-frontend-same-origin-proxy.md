@@ -16,6 +16,14 @@ Two ways to reach the API from the browser were considered: calling the API's ow
   URI part, so the `/api` prefix is preserved, and `Origin` is forwarded as sent.
 - `CORS_ORIGIN` must equal the origin the browser shows (`http://localhost:5173` in development, the real site
   origin in production). The guard checks it even though the request is same-origin from the browser's view.
+- Client identity and scheme: nginx has two modes, `FORWARDED_HEADERS_MODE=edge` (default) and `trusted`. In `edge`
+  mode it is the first proxy and overwrites `X-Forwarded-For` (with the socket address), `X-Forwarded-Proto` (with its
+  own scheme) and `X-Forwarded-Host`, so the backend (`TRUST_PROXY_HOPS=1`) rate-limits the real peer and a client
+  cannot claim HTTPS. In `trusted` mode, for a TLS-terminating load balancer you control, nginx appends to
+  `X-Forwarded-For` and honours `X-Forwarded-Proto` only when it is `http` or `https`; the backend then needs
+  `TRUST_PROXY_HOPS=2`. An unknown mode makes nginx refuse to start. Rejected: always trusting forwarding headers
+  (a direct client could pick its own rate-limit bucket) and always overwriting them (a TLS-terminating load balancer's
+  `https` would be lost and the `Secure` session cookie never sent).
 - The SPA's hardening headers (CSP without `unsafe-inline`, `nosniff`, frame and referrer policies) are set by nginx
   on SPA locations only; `/api` keeps the backend's own `helmet` headers. HSTS is left to the TLS-terminating layer.
 
