@@ -39,7 +39,7 @@ export function WelcomePage() {
               aria-hidden="true"
               className="grid size-[22px] flex-none place-items-center rounded-full bg-linear-to-br from-brand-from to-brand-to text-[11px] font-semibold text-white"
             >
-              {user.name.trim().charAt(0).toUpperCase()}
+              {Array.from(user.name.trim())[0]?.toUpperCase()}
             </span>
             <span className="min-w-0 break-all">{user.email}</span>
           </span>

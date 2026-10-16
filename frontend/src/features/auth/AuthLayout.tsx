@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { Logo } from '../../components/ui/Logo';
 
 interface AuthLayoutProps {
@@ -27,8 +27,10 @@ export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProp
 
 /** The switch link in the footer. 44px tall so it is a comfortable tap target (FR-019). */
 export function AuthLink({ to, children }: { to: string; children: ReactNode }) {
+  // Keep the router state so a visitor who switches between sign-in and sign-up still returns where they were going.
+  const state: unknown = useLocation().state;
   return (
-    <Link to={to} className="inline-flex min-h-11 items-center font-medium text-accent hover:underline">
+    <Link to={to} state={state} className="inline-flex min-h-11 items-center font-medium text-accent hover:underline">
       {children}
     </Link>
   );

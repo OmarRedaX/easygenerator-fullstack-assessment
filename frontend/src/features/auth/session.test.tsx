@@ -87,36 +87,8 @@ describe('useStartSession', () => {
     expect(cancel.mock.invocationCallOrder[0]).toBeLessThan(set.mock.invocationCallOrder[0] ?? 0);
   });
 
-  it('a late 401 from an older session check cannot overwrite the new session (race)', async () => {
-    const client = createTestQueryClient();
-    let rejectOldCheck: (reason: unknown) => void = () => undefined;
-    getMeOrNullMock.mockImplementation(
-      () =>
-        new Promise<User | null>((_resolve, reject) => {
-          rejectOldCheck = reject;
-        }),
-    );
-    const { result } = renderHook(() => ({ session: useSession(), start: useStartSession() }), {
-      wrapper: wrapperFor(client),
-    });
-    await waitFor(() => {
-      expect(getMeOrNullMock).toHaveBeenCalledTimes(1);
-    });
-
-    await act(async () => {
-      await result.current.start(newUser);
-    });
-    // The old request now fails; getMeOrNull would have mapped a 401 to null, so simulate both outcomes.
-    await act(async () => {
-      rejectOldCheck(new ApiError(401, 'Unauthorized'));
-      await new Promise((resolve) => setTimeout(resolve, 20));
-    });
-
-    expect(client.getQueryData(SESSION_KEY)).toEqual(newUser);
-    expect(result.current.session.data).toEqual(newUser);
-  });
-
-  it('a late "null" result from an older session check is also dropped', async () => {
+  // getMeOrNull maps a 401 to null, so a late "null" is what a stale 401 looks like to the cache (FR-013).
+  it('a late "null" result (a stale 401) from an older session check cannot discard the new session', async () => {
     const client = createTestQueryClient();
     let resolveOldCheck: (value: User | null) => void = () => undefined;
     getMeOrNullMock.mockImplementation(

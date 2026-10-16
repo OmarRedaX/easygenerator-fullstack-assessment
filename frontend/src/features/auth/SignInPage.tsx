@@ -30,6 +30,7 @@ export function SignInPage() {
   const {
     register,
     handleSubmit,
+    setError,
     setFocus,
     formState: { errors, isSubmitting },
   } = useForm<SignInValues, unknown, SignInInput>({
@@ -46,8 +47,21 @@ export function SignInPage() {
       void navigate(returnPathFromState(location.state), { replace: true });
     } catch (error) {
       const feedback = toFormFeedback(error, 'signin');
-      if (feedback.message) {
-        setAlert({ message: feedback.message, ...(feedback.requestId ? { requestId: feedback.requestId } : {}) });
+      // A server rule the client check missed (400 with details): show it on its field and focus the first one.
+      let firstInvalid: 'email' | 'password' | undefined;
+      for (const field of ['email', 'password'] as const) {
+        const message = feedback.fieldErrors[field];
+        if (message) {
+          setError(field, { type: 'server', message });
+          firstInvalid ??= field;
+        }
+      }
+      if (firstInvalid) setFocus(firstInvalid);
+      // This form has no name field, so a detail about it goes in the alert instead of being dropped.
+      const nameDetail = feedback.fieldErrors.name ? `name: ${feedback.fieldErrors.name}` : undefined;
+      const message = [feedback.message, nameDetail].filter(Boolean).join(' ');
+      if (message) {
+        setAlert({ message, ...(feedback.requestId ? { requestId: feedback.requestId } : {}) });
       }
       // Wrong credentials: the password is the likelier typo, and the values stay in place.
       if (error instanceof ApiError && error.status === 401) setFocus('password');

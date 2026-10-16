@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect } from 'react';
 import { getMeOrNull } from '../../lib/api/auth';
+import { setUnauthorizedHandler } from '../../lib/api/client';
 import type { User } from '../../lib/api/types';
 
 /** The one cache entry for "who is signed in": a User, or null when signed out (a 401 is a normal answer). */
@@ -58,6 +59,23 @@ export function useRevalidateOnRestore(): void {
     window.addEventListener('pageshow', onPageShow);
     return () => {
       window.removeEventListener('pageshow', onPageShow);
+    };
+  }, [client]);
+}
+
+/**
+ * A 401 from any protected request means the session is gone: clear it so the guards redirect to /signin.
+ * Registered in an effect (not while creating the client) so that React StrictMode's double initialisation in
+ * development cannot leave the handler pointing at a discarded client.
+ */
+export function useClearSessionOnUnauthorized(): void {
+  const client = useQueryClient();
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      client.setQueryData<User | null>(SESSION_KEY, null);
+    });
+    return () => {
+      setUnauthorizedHandler(null);
     };
   }, [client]);
 }

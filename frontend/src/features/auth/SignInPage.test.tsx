@@ -162,6 +162,33 @@ describe('SignInPage: errors', () => {
     expect(screen.queryByText(/Reference/)).not.toBeInTheDocument();
   });
 
+  it('400 with per-field details (a server rule the client check missed) is shown on the field and focused', async () => {
+    signInMock.mockRejectedValue(
+      new ApiError(400, 'Validation failed', {
+        details: [{ field: 'email', messages: ['email must be an email'] }],
+      }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await fill(user);
+    await user.click(submit());
+    expect(await screen.findByText('email must be an email')).toBeInTheDocument();
+    expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Email')).toHaveFocus();
+    expect(screen.getByLabelText('Password')).toHaveValue('whatever');
+  });
+
+  it('400 details for a field this form does not have are shown in the alert, never dropped', async () => {
+    signInMock.mockRejectedValue(
+      new ApiError(400, 'Validation failed', { details: [{ field: 'name', messages: ['name is not allowed'] }] }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await fill(user);
+    await user.click(submit());
+    expect(await screen.findByRole('alert')).toHaveTextContent('name: name is not allowed');
+  });
+
   it.each([
     ['429', new ApiError(429, 'ThrottlerException'), 'Too many attempts. Try again in a minute.'],
     ['403', new ApiError(403, 'Forbidden'), 'This request was blocked. Reload the page and try again.'],

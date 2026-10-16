@@ -40,6 +40,11 @@ describe('WelcomePage', () => {
     });
   });
 
+  it('shows the first character of the name as the avatar, even when it is an emoji', () => {
+    renderSignedIn({ ...member, name: '😀😀😀' });
+    expect(screen.getByText('😀')).toBeInTheDocument();
+  });
+
   it('lets a very long email wrap instead of overflowing', () => {
     const long = `${'a'.repeat(60)}@${'b'.repeat(60)}.example.com`;
     renderSignedIn({ ...member, email: long });

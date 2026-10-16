@@ -147,6 +147,15 @@
 }
 
 /* Gentler, non-vestibular equivalents: no sliding or scaling, opacity only. */
+@keyframes fade-only {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -161,7 +170,7 @@
   .animate-rise-late,
   .animate-rise-later,
   .animate-fade {
-    animation-name: fade-in !important;
+    animation-name: fade-only !important;
     animation-duration: 200ms !important;
   }
   .active\:scale-press:active {

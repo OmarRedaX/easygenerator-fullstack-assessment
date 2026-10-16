@@ -88,6 +88,15 @@ describe('index.css', () => {
     expect(css).toContain(query);
   });
 
+  it('reduced motion replaces the rise-in with an opacity-only fade (no sliding, no scaling)', () => {
+    const reduced = block(css, '@media (prefers-reduced-motion: reduce)');
+    expect(reduced).toMatch(/animation-name:\s*fade-only/);
+    expect(reduced).not.toMatch(/animation-name:\s*fade-in/);
+    const keyframes = block(css, '@keyframes fade-only');
+    expect(keyframes).toContain('opacity');
+    expect(keyframes).not.toContain('transform');
+  });
+
   it('never uses inline-style-only features that the CSP would block', () => {
     expect(css).not.toMatch(/@import\s+url\(\s*['"]?https?:/);
   });

@@ -1,8 +1,9 @@
-import { screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 import { useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppRoutes, createAppQueryClient } from './App';
+import { App, AppRoutes, createAppQueryClient } from './App';
 import { getMeOrNull, signIn } from './lib/api/auth';
 import { request, setUnauthorizedHandler } from './lib/api/client';
 import { ApiError } from './lib/api/errors';
@@ -108,6 +109,32 @@ describe('routing table', () => {
     await waitFor(() => {
       expect(document.title).toBe('Easygenerator');
     });
+  });
+});
+
+describe('the real App under React StrictMode (development)', () => {
+  it('still redirects when a protected request answers 401 (the handler belongs to the client in use)', async () => {
+    window.history.pushState({}, '', '/');
+    getMeOrNullMock.mockResolvedValue(member);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>().mockResolvedValue(
+        new Response(JSON.stringify({ message: 'Unauthorized' }), {
+          status: 401,
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
+    );
+    render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+    await screen.findByRole('heading', { level: 1, name: 'Welcome to the application.' });
+
+    await expect(request('GET', '/something-protected')).rejects.toBeInstanceOf(ApiError);
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
   });
 });
 

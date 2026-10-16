@@ -3,23 +3,18 @@ import { useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { GuestOnly } from './features/auth/GuestOnly';
 import { RequireAuth } from './features/auth/RequireAuth';
-import { SESSION_KEY, useRevalidateOnRestore } from './features/auth/session';
+import { useClearSessionOnUnauthorized, useRevalidateOnRestore } from './features/auth/session';
 import { SignInPage } from './features/auth/SignInPage';
 import { SignUpPage } from './features/auth/SignUpPage';
 import { WelcomePage } from './features/home/WelcomePage';
-import { setUnauthorizedHandler } from './lib/api/client';
 
-/** A 401 from any protected request means the session is gone: the guards then redirect to /signin. */
 export function createAppQueryClient(): QueryClient {
-  const client = new QueryClient();
-  setUnauthorizedHandler(() => {
-    client.setQueryData(SESSION_KEY, null);
-  });
-  return client;
+  return new QueryClient();
 }
 
 export function AppRoutes() {
   useRevalidateOnRestore();
+  useClearSessionOnUnauthorized();
   return (
     <Routes>
       <Route element={<RequireAuth />}>
