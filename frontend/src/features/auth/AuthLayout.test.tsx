@@ -44,6 +44,6 @@ describe('AuthLink', () => {
         <AuthLink to="/signup">Create an account</AuthLink>
       </MemoryRouter>,
     );
-    expect(screen.getByRole('link')).toHaveClass('min-h-11');
+    expect(screen.getByRole('link')).toHaveClass('min-h-11', 'min-w-11'); // a short label ("Sign in") measured 43px wide in Chrome
   });
 });

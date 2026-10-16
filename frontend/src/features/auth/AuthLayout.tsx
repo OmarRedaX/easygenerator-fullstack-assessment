@@ -30,7 +30,7 @@ export function AuthLink({ to, children }: { to: string; children: ReactNode }) 
   // Keep the router state so a visitor who switches between sign-in and sign-up still returns where they were going.
   const state: unknown = useLocation().state;
   return (
-    <Link to={to} state={state} className="inline-flex min-h-11 items-center font-medium text-accent hover:underline">
+    <Link to={to} state={state} className="inline-flex min-h-11 min-w-11 items-center justify-center font-medium text-accent hover:underline">
       {children}
     </Link>
   );
