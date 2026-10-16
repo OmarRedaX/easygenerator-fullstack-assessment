@@ -16,7 +16,7 @@ Router: declarative `BrowserRouter` (tests use `MemoryRouter`). One `<Routes>` t
 | pending | splash | splash |
 | error (non-401) | splash error + Retry (`refetch`) | splash error + Retry |
 | `null` | `<Navigate to="/signin" replace state={{ from }} />` | render the page |
-| `User` | render the page | `<Navigate to="/" replace />` |
+| `User` | render the page | `<Navigate to={safeReturnPath(state.from)} replace />` (`/` when there is no safe return path; it must not force `/`, or a visitor heading to `/?x=1` loses it) |
 
 - `from` = `location.pathname + location.search`. After a successful sign-in or sign-up the page navigates to
   `from` when it is a safe internal path (starts with exactly one `/`, not `//`, not `/signin`, not `/signup`),

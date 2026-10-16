@@ -18,7 +18,7 @@ and checks every planned dependency against the registry and the existing monore
 | @tanstack/react-query | 5.104.3 | `^5.104.3` | `cancelQueries`, `setQueryData`, `retry: false`. |
 | tailwindcss + @tailwindcss/vite | 4.3.3 | `^4.3.3` | CSS-first `@theme`; no `tailwind.config.js`, no PostCSS file. |
 | vitest + @vitest/coverage-v8 | 5.0.5 | `^5.0.5` | Needs Node `^22.12`; shares Vite 8. |
-| jsdom | 30.1.3 | `^30.1.3` | Needs Node `^22.22.2`. |
+| jsdom | 30.1.3 | `^29.1.1` (as installed) | jsdom 30 needs Node `^22.22.2 || ^24.15`; the local Node 24.11 does not meet it, so npm resolved 29, which also runs on CI Node 22. |
 | @testing-library/react / user-event / jest-dom | 16.3.3 / 14.6.8 / 7.0.1 | latest | `@testing-library/dom ^10` is a peer and is added explicitly. |
 | **typescript** | 7.0.2 | **`^6.0.3`** (same as backend) | `typescript-eslint@8.71.2` declares `typescript <6.1.0`; TS 7 would break typed linting. One hoisted version shared with the backend workspace. |
 | eslint, @eslint/js, globals, typescript-eslint | 10.12 / 10.0.1 / 17.13 / 8.71.2 | same ranges as backend | Already hoisted at the root; a second ESLint would be pure duplication. |

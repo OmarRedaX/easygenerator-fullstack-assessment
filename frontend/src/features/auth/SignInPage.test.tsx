@@ -56,6 +56,7 @@ describe('SignInPage: content', () => {
     expect(screen.getByLabelText('Email')).toHaveAttribute('type', 'email');
     expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'current-password');
     expect(screen.getByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/signup');
+    expect(screen.getByRole('link', { name: 'Create an account' })).toHaveClass('min-h-11'); // 44px tap target (FR-019)
     await waitFor(() => {
       expect(document.title).toBe('Sign in - Easygenerator');
     });

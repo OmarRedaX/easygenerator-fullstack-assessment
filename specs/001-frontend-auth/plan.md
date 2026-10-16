@@ -23,7 +23,7 @@ non-root nginx image, and README instructions. Research (`research.md`) settled 
 
 **Storage**: N/A (in-memory query cache only; nothing persisted client-side)
 
-**Testing**: Vitest 5 + jsdom 30 + Testing Library (react, user-event, jest-dom) + `axe-core`; `@vitest/coverage-v8`; component tests mock `src/lib/api/auth`, the client suite stubs `fetch`; no MSW
+**Testing**: Vitest 5 + jsdom 29 + Testing Library (react, user-event, jest-dom) + `axe-core`; `@vitest/coverage-v8`; component tests mock `src/lib/api/auth`, the client suite stubs `fetch`; no MSW
 
 **Target Platform**: Evergreen browsers (320px to 1920px, light/dark), served by nginx-unprivileged 1.30-alpine; dev on Vite at `localhost:5173`
 

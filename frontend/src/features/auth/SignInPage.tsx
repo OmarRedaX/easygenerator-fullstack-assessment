@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
@@ -10,7 +10,7 @@ import { useDocumentTitle } from '../../components/useDocumentTitle';
 import { signIn } from '../../lib/api/auth';
 import { ApiError } from '../../lib/api/errors';
 import { signInSchema, type SignInInput, type SignInValues } from '../../lib/validation/schemas';
-import { AuthLayout } from './AuthLayout';
+import { AuthLayout, AuthLink } from './AuthLayout';
 import { toFormFeedback } from './formErrors';
 import { returnPathFromState } from './safeReturnPath';
 import { useStartSession } from './session';
@@ -60,10 +60,8 @@ export function SignInPage() {
       subtitle="Welcome back."
       footer={
         <>
-          New here?{' '}
-          <Link to="/signup" className="font-medium text-accent hover:underline">
-            Create an account
-          </Link>
+          New here?
+          <AuthLink to="/signup">Create an account</AuthLink>
         </>
       }
     >

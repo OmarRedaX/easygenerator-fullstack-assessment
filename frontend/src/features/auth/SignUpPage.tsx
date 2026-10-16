@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useId, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
@@ -11,7 +11,7 @@ import { useDocumentTitle } from '../../components/useDocumentTitle';
 import { signUp } from '../../lib/api/auth';
 import { evaluatePassword } from '../../lib/validation/password-policy';
 import { signUpSchema, type SignUpInput, type SignUpValues } from '../../lib/validation/schemas';
-import { AuthLayout } from './AuthLayout';
+import { AuthLayout, AuthLink } from './AuthLayout';
 import { toFormFeedback, type FormField } from './formErrors';
 import { returnPathFromState } from './safeReturnPath';
 import { useStartSession } from './session';
@@ -71,10 +71,8 @@ export function SignUpPage() {
       subtitle="It only takes a minute."
       footer={
         <>
-          Already have an account?{' '}
-          <Link to="/signin" className="font-medium text-accent hover:underline">
-            Sign in
-          </Link>
+          Already have an account?
+          <AuthLink to="/signin">Sign in</AuthLink>
         </>
       }
     >
