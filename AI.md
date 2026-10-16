@@ -60,6 +60,13 @@ From the log, in order:
 - Plan contract failed its own lint; compose YAML invalid; port 3000 occupied.
 - Review gate: urlencoded parser bypass, cookie-name validation, vacuous session tests, test env isolation,
   unauthenticated dev Mongo on all interfaces, contract and docs drift.
+- No-store headers (ADR 0008): the AI wired the middleware to `AuthController` in `AuthModule`; the malformed-JSON
+  test went red because the body parser answers 400/413 before routing, so it moved to
+  `app.use('/api/auth', ...)` ahead of the parser and guards.
+- Flaky integration suite: `SessionStoreService.onModuleDestroy` closed the Mongo client while connect-mongo was
+  still connecting and building its TTL index (`MongoClientClosedError`). It now awaits the store's startup first. My
+  first stress run showed 70 failures per run, which was my own exported `SESSION_SECRET=x`, not the fix; the
+  failure count being nothing like the earlier 0-3 is what gave it away.
 
 ## Frontend: brainstorm, spec-kit and the Apple Design Skill
 
@@ -112,6 +119,7 @@ What I corrected or decided differently from the AI's proposal:
 
 - **Cookie sessions over access JWT + rotating refresh.** The AI recommended JWT; I chose server-side sessions.
 - **Fail-closed CSRF** (Origin, then Referer, otherwise 403). The AI's rule allowed requests with no Origin.
+- **`Cache-Control: no-store` on `/api/auth` only (ADR 0008).** The AI recommended it on every `/api` response; I chose the narrower scope so `/health` and Swagger keep their ETags.
 - **Explicit argon2 parameters** (OWASP minimum 19456 KiB / 2 / 1), not "current recommended".
 - **Explicit special-character set** (space excluded) and a secret of at least 32 **bytes**, not "32 characters".
 - **`absoluteExpiresAt` enforced by `SessionGuard`**, not left to cookie/TTL expiry.
@@ -133,6 +141,10 @@ What I corrected or decided differently from the AI's proposal:
   forwarding-header defence was proven through the compose stack (spoofed `X-Forwarded-For` / `-Proto`).
 - Unit tests (129+) and integration tests against a real MongoDB in an isolated `auth_test_*` database; coverage
   98.7 / 87.5 / 98.6 / 99.7 % (statements / branches / functions / lines) against an enforced 80% threshold.
+- No-store: 19 integration tests on a real MongoDB (success and error answers of the four auth endpoints, 400, 401,
+  403, 409, 429, malformed JSON, a 20 kb body, `/health` untouched, the contract declaring the header). The
+  shutdown-race fix was stressed with the full integration suite under 8 busy CPU loops: 3 of 4 runs failed on the
+  old code, 6 of 6 passed with the fix.
 - Strict typecheck, ESLint, Redocly lint of the contract, `npm audit --audit-level=high --omit=dev`.
 - Docker image builds, runs as uid 1000 and passes its health check; the README curl flow was run against the
   built app; startup fails fast with a clear error for a bad secret or an unreachable database.
